@@ -6,11 +6,9 @@ const router = useRouter()
 
 <template>
   <div>
-    <button @click="router.push({ name: 'page1' })">page1</button>
-    <button @click="router.push({ name: 'page2' })">page2</button>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+    <button class="button" @click="router.push({ name: 'page1' })">page1</button>
+    <button class="button" @click="router.push({ name: 'page2' })">page2</button>
+    <hr>
     <router-view v-slot="{ Component, route }">
       <transition name="fade" mode="out-in" appear>
         <component :is="Component" :key="route.fullPath" />
@@ -20,19 +18,11 @@ const router = useRouter()
 </template>
 
 <style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
+.button {
+  height: 2em;
   will-change: filter;
+  margin-right: 10px;
   transition: filter 300ms;
-}
-
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
 }
 
 /* 主内容区动画 */

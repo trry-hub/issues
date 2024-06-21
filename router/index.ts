@@ -12,15 +12,6 @@ const router = createRouter({
     name: 'page2',
     component: () => import('@/views/page2.vue'),
   }],
-  scrollBehavior(_to, _from, savedPosition) {
-    if (savedPosition) {
-      return savedPosition
-    }
-    else {
-      return { top: 0 }
-    }
-  },
 })
 
-export { router, history }
 export default router
