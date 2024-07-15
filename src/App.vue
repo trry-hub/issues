@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import Artplayer from 'artplayer'
 import { onMounted, ref } from 'vue'
-import {artplayerPluginVttThumbnail,artplayerSegmentPlugin} from './plugins'
+import {artplayerChaptersPlugin} from './plugins'
 
 import { res, subtitlesVTT, chaptersVTT } from './res'
 
 let theme = '#3d61e3'
 const artRef = ref<HTMLDivElement>()
-const art = ref<Artplayer>(null)
+const art = ref<Artplayer>()
 onMounted(() => {
   art.value = new Artplayer({
     url: res.videoInfo.playUrl.filter((item) => item.includes('mp4'))[0],
@@ -40,14 +40,16 @@ onMounted(() => {
       },
     ],
     plugins: [
-      // artplayerPluginVttThumbnail({}),
-      artplayerSegmentPlugin({segments:res.autoChapters})
+      artplayerChaptersPlugin(res.autoChapters)
     ],
     subtitle: {
       url: subtitlesVTT(res.transcription.paragraphs).src,
       type: 'vtt',
       encoding: 'utf-8',
       escape: true,
+      style: {
+        fontSize: '1em'
+      }
     },
     lock: true,
     autoOrientation: true,
@@ -55,10 +57,6 @@ onMounted(() => {
   })
   console.log('instance: ', art)
 })
-
-// const subtitles = subtitlesVTT(copyDetail.value.transcription.paragraphs)
-//     playerRef.value!.mediaPlayer!.textTracks.add(subtitles)
-//     const chapters = chaptersVTT(copyDetail.value.autoChapters)
 </script>
 
 <template>
@@ -67,10 +65,9 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .artplayer-app {
-  max-width: 50%;
+  max-width: 100%;
   max-height: 100%;
   margin: 0 auto;
-  // height: 400px;
   aspect-ratio: 16/9;
 }
 </style>
