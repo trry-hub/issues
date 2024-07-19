@@ -9,6 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "media-icons": "^1.1.5",
+    "vidstack": "^1.11.29",
     "vue": "^3.4.29",
     "vue-router": "^4.3.3"
   },
