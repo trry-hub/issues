@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "eruda": "^3.2.1",
     "media-icons": "^1.1.5",
     "vidstack": "^1.11.29",
     "vue": "^3.4.29",

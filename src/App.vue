@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import eruda from 'eruda'
 // Import styles.
 import 'vidstack/player/styles/base.css'
 // Register elements.
@@ -53,6 +54,8 @@ function onProviderChange(event: MediaProviderChangeEvent) {
 function onCanPlay(event: MediaCanPlayEvent) {
   // ...
 }
+
+eruda.init()
 </script>
 
 <template>
