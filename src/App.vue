@@ -20,7 +20,7 @@ eruda.init()
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .button {
   height: 2em;
   will-change: filter;
