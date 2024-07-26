@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import eruda from 'eruda'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+
+eruda.init()
 </script>
 
 <template>
