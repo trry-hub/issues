@@ -15,6 +15,9 @@
         "@/*": [
           "src/*"
         ],
+        "#/*": [
+          "typings/*"
+        ]
       },
       "resolveJsonModule": true,
       "types": [

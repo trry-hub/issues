@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-const history = createWebHistory()
+let routerBase = window.__MICRO_APP_BASE_ROUTE__
+console.log('routerBase: ', routerBase)
+const history = createWebHistory(routerBase)
 const router = createRouter({
   history,
   routes: [{
@@ -15,3 +17,4 @@ const router = createRouter({
 })
 
 export default router
+export {router, history}

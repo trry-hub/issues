@@ -9,6 +9,7 @@ eruda.init()
 
 <template>
   <div>
+    123
     <button class="button" @click="router.push({ name: 'page1' })">page1</button>
     <button class="button" @click="router.push({ name: 'page2' })">page2</button>
     <hr>
