@@ -12236,7 +12236,7 @@ export function subtitlesVTT(data: any) {
   let endTime = ''
 
   data.forEach((paragraph: any) => {
-    paragraph.words.forEach((word, index) => {
+    paragraph.words.forEach((word:any, index: number) => {
       if (currentPhrase === '') {
         startTime = formatTimeVTT(word.start)
       }
@@ -12266,7 +12266,7 @@ export function chaptersVTT(chapters: any) {
     '',
   ]
 
-  chapters.forEach((chapter) => {
+  chapters.forEach((chapter: any) => {
     const startTime = formatTimeVTT(chapter.start)
     const endTime = formatTimeVTT(chapter.end)
     vtt.push(`${startTime} --> ${endTime}`)
