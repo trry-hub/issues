@@ -24,7 +24,7 @@ const MAX_IMAGE_SIZE = 1024 * 1024;
 const CMAP_URL = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/cmaps/";
 const CMAP_PACKED = true;
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/build/pdf.worker.mjs";
+pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.7.76/legacy/build/pdf.worker.mjs";
 
 const DEFAULT_URL = "https://cdnfile.yaomaitong.net/ksh/pdfcee021527e874f3587b2f25e53dbb390.pdf";
 const DEFAULT_SCALE_DELTA = 1.1;
