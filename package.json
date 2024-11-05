@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "eruda": "^3.4.0",
+    "qxs-bns": "link:../../project/qxs-bns/dist",
     "vue": "^3.5.12",
     "vue-router": "^4.4.5"
   },

@@ -4,14 +4,22 @@ const history = createWebHistory()
 const router = createRouter({
   history,
   routes: [{
-    path: '/page1',
-    name: 'page1',
-    component: () => import('@/views/page1.vue'),
+    path: '/components',
+    name: 'components',
+    component: () => import('@/views/components.vue'),
   }, {
-    path: '/page2',
-    name: 'page2',
-    component: () => import('@/views/page2.vue'),
-  }],
+    path: '/hooks',
+    name: 'hooks',
+    component: () => import('@/views/hooks.vue'),
+  }, {
+    path: '/directives',
+    name: 'directives',
+    component: () => import('@/views/directives.vue'),
+  }, {
+    path: '/utils',
+    name: 'utils',
+    component: () => import('@/views/utils.vue'),
+  },],
 })
 
 export default router

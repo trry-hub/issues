@@ -9,8 +9,10 @@ eruda.init()
 
 <template>
   <div>
-    <button class="button" @click="router.push({ name: 'page1' })">page1</button>
-    <button class="button" @click="router.push({ name: 'page2' })">page2</button>
+    <button class="button" @click="router.push({ name: 'components' })">components</button>
+    <button class="button" @click="router.push({ name: 'directives' })">directives</button>
+    <button class="button" @click="router.push({ name: 'hooks' })">hooks</button>
+    <button class="button" @click="router.push({ name: 'utils' })">utils</button>
     <hr>
     <router-view v-slot="{ Component, route }">
       <transition name="fade" mode="out-in" appear>
