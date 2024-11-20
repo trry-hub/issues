@@ -9,12 +9,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@qxs-bns/components": "^0.0.5",
+    "@qxs-bns/utils": "^0.0.1",
     "eruda": "^3.4.0",
-    "qxs-bns": "link:../../project/qxs-bns/dist",
     "vue": "^3.5.12",
     "vue-router": "^4.4.5"
   },
   "devDependencies": {
+    "@qxs-bns/directives": "^0.0.1",
+    "@types/node": "^22.9.0",
     "@vitejs/plugin-vue": "^5.1.4",
     "sass": "^1.80.6",
     "typescript": "^5.6.3",

@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import { vWaves,vCopy } from "qxs-bns/directives";
-import 'qxs-bns/directives/style.css'
+import { vWaves,vCopy } from "@qxs-bns/directives";
+import Directives from '../../../../project/qxs-bns/playground/src/views/directives.vue'
 
 </script>
 <template>
   <div>
+    <Directives/>
     <div v-waves class="block">page1</div>
     <button v-waves>水波纹按钮</button>
     <hr/>

@@ -1,7 +1,6 @@
 <script lang="ts" setup>
-import { vWaves } from "qxs-bns/directives";
-import 'qxs-bns/directives/style.css'
-import { watermark } from "qxs-bns/utils";
+import { vWaves } from "@qxs-bns/directives";
+import { watermark } from "@qxs-bns/utils";
 import { onMounted } from "vue";
 const init = watermark()
 onMounted(() => {

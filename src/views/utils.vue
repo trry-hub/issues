@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { watermark } from "qxs-bns/utils";
+import { watermark } from "@qxs-bns/utils";
 import { onMounted } from "vue";
 const init = watermark()
 onMounted(() => {

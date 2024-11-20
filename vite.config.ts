@@ -3,6 +3,7 @@ import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
 // https://vitejs.dev/config/
+
 export default defineConfig({
   server: {
     host: '0.0.0.0'
@@ -13,6 +14,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
+      '@docs': path.resolve(__dirname, '../../project/qxs-bns/docs'),
+      '@playground': path.resolve(__dirname, '../../project/qxs-bns/playground'),
     }
   }
 })
