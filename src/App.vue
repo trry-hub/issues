@@ -1,55 +1,76 @@
 <script setup lang="ts">
-import eruda from 'eruda'
-import { useRouter } from 'vue-router'
+import { ref } from "vue";
+import axios from "axios";
+import FileUpload from "./componets/FileUpload.vue";
+// import { uploadFile } from "@qxs-bns/utils";
+import type { UploadRequestOption } from "ant-design-vue/es/vc-upload/interface";
 
-const router = useRouter()
+const fileList = ref([]);
 
-eruda.init()
+function uploadFile(options: {
+  file: File
+  getCredentials: () => Promise<any>
+  bucket: string
+  onProgress: ({ percent }: { percent: number }) => void
+}) {
+  return new Promise((resolve, reject) => {
+    let percent = 0
+    setInterval(() => {
+      percent += 10
+      if (percent > 100) {
+        return
+      }
+      options.onProgress({ percent })
+      console.log('percent: ', percent)
+      if (percent === 100) {
+        setTimeout(() => {
+          resolve({
+            url: 'https://www.baidu.com',
+          })
+        }, 1000)
+      }
+    }, 1000)
+  })
+}
+
+async function getCredentials() {
+  const params = {
+    bucketType: 107,
+  };
+  const res = await axios({
+    url: '/proxy'+import.meta.env.VITE_APP_API_QXS + "/common/v1/get-sts-token",
+    params,
+    headers: {
+      token: "9_430083009817070058_88f91c756b1247429713edcfee420e68",
+    },
+  });
+  return res.data.data
+}
+async function customRequest(options: UploadRequestOption) {
+  const { onProgress, onError, onSuccess, file } = options;
+  try {
+    // oss sdk 上传
+    const res = await uploadFile({
+      file: file as File,
+      getCredentials,
+      bucket: "yao-file-daily",
+      onProgress,
+    });
+    onSuccess?.(res);
+  } catch (error) {
+    onError?.(error as Error, null);
+  }
+}
 </script>
 
 <template>
-  <div>
-    <button class="button" @click="router.push({ name: 'page1' })">page1</button>
-    <button class="button" @click="router.push({ name: 'page2' })">page2</button>
-    <hr>
-    <router-view v-slot="{ Component, route }">
-      <transition name="fade" mode="out-in" appear>
-        <component :is="Component" :key="route.fullPath" />
-      </transition>
-    </router-view>
-  </div>
+  <FileUpload
+    v-model:file-list="fileList"
+    :custom-request="customRequest"
+    :max-count="1"
+    :notip="true"
+    :ext="['png', 'jpg', 'jpeg']"
+  >
+    <a-button>上传</a-button>
+  </FileUpload>
 </template>
-
-<style scoped lang="scss">
-.button {
-  height: 2em;
-  will-change: filter;
-  margin-right: 10px;
-  transition: filter 300ms;
-}
-
-/* 主内容区动画 */
-.fade-enter-active,
-.slide-left-enter-active,
-.slide-right-enter-active,
-.slide-top-enter-active,
-.slide-bottom-enter-active {
-  transition: 0.2s;
-}
-
-.fade-leave-active,
-.slide-left-leave-active,
-.slide-right-leave-active,
-.slide-top-leave-active,
-.slide-bottom-leave-active {
-  transition: 0.15s;
-}
-
-.fade-enter-from {
-  opacity: 0;
-}
-
-.fade-leave-to {
-  opacity: 0;
-}
-</style>
