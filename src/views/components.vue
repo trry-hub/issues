@@ -8,6 +8,7 @@
 -->
 <script lang="ts" setup>
 import { QxsImageUpload } from '@qxs-bns/components'
+import '@qxs-bns/components/theme-chalk'
 // import Component from '@playground/src/views/components.vue'
 </script>
 
