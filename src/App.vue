@@ -1,31 +1,31 @@
 <script setup lang="ts">
-import eruda from 'eruda'
-import { useRouter } from 'vue-router'
+import { json } from "./videojson.js";
+import { excelToJson } from "@qxs-bns/utils";
+console.log("excelToJson: ", excelToJson);
 
-const router = useRouter()
-
-eruda.init()
+const handleClick = (item: any) => {
+  window.open(item.video_url, "_blank");
+};
 </script>
 
 <template>
-  <div>
-    <button class="button" @click="router.push({ name: 'page1' })">page1</button>
-    <button class="button" @click="router.push({ name: 'page2' })">page2</button>
-    <hr>
-    <router-view v-slot="{ Component, route }">
-      <transition name="fade" mode="out-in" appear>
-        <component :is="Component" :key="route.fullPath" />
-      </transition>
-    </router-view>
+  <div class="video-list">
+    <div v-for="item in json" :key="item.video_id">
+      <video @click="handleClick(item)" :src="`${item.video_url}#t=3`"></video>
+      {{ item.video_id }}
+    </div>
   </div>
 </template>
 
 <style scoped lang="scss">
-.button {
-  height: 2em;
-  will-change: filter;
-  margin-right: 10px;
-  transition: filter 300ms;
+.video-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+  video {
+    width: 200px;
+    height: 200px;
+  }
 }
 
 /* 主内容区动画 */
