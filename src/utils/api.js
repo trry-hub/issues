@@ -1,0 +1,22 @@
+export default {
+  "imgUrl": "./images/",
+  "attachUrl": "attach/",
+  "jsonUrl": "datasearch/",
+  "loginUrl": "https://zwfw.nmpa.gov.cn/",
+  "loginOutUrl": "https://zwfw.nmpa.gov.cn/web/user/login/logout",
+  "getDictList": "datasearch/data/dict/getDictList",
+  "NMPA_DATA": "datasearch/config/NMPA_DATA.json",
+  "getHotKey": "datasearch/data/hotkey/getHotKey",
+  "queryList": "datasearch/data/nmpadata/search",
+  "queryDetail": "datasearch/data/nmpadata/queryDetail",
+  "getLoginUserInfo": "datasearch/data/sso/getLoginUserInfo",
+  "loginOut": "datasearch/data/sso/loginOut",
+  "countNums": "datasearch/data/nmpadata/countNums",
+  "getfavoriteDataList": "datasearch/data/favorite/getfavoriteDataList",
+  "addFavoriteData": "datasearch/data/favorite/addFavoriteData",
+  "delFavoriteData": "datasearch/data/favorite/delFavoriteData",
+  "subdata": "datasearch/data/feedback/subdata",
+  "mysubdata": "datasearch/data/feedback/mysubdata",
+  "showCollectionDataListByUser": "datasearch/data/favorite/showCollectionDataListByUser",
+  "queryLink": "datasearch/data/nmpadata/queryLink"
+}
