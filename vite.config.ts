@@ -2,6 +2,8 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
+// or use unplugin-element-plus
+import ElementPlus from 'unplugin-element-plus/vite'
 // https://vitejs.dev/config/
 export default defineConfig({
   server: {
@@ -9,10 +11,13 @@ export default defineConfig({
   },
   plugins: [
     vue(),
+    ElementPlus({
+      useSource: true,
+    }),
   ],
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, 'src'),
+      '@': path.resolve(__dirname, 'src')
     }
-  }
+  },
 })

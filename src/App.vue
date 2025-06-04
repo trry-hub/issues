@@ -1,26 +1,32 @@
 <script setup lang="ts">
-import eruda from 'eruda'
-import { useRouter } from 'vue-router'
+import eruda from "eruda";
+import { useRouter } from "vue-router";
 
-const router = useRouter()
+const router = useRouter();
 
-eruda.init()
+eruda.init();
 </script>
 
 <template>
   <div>
-    <button class="button" @click="router.push({ name: 'page1' })">page1</button>
-    <button class="button" @click="router.push({ name: 'page2' })">page2</button>
-    <hr>
-    <router-view v-slot="{ Component, route }">
-      <transition name="fade" mode="out-in" appear>
-        <component :is="Component" :key="route.fullPath" />
-      </transition>
-    </router-view>
+    <el-config-provider namespace="qxs">
+      <button class="button" @click="router.push({ name: 'page1' })">
+        page1
+      </button>
+      <button class="button" @click="router.push({ name: 'page2' })">
+        page2
+      </button>
+      <hr />
+      <router-view v-slot="{ Component, route }">
+        <transition name="fade" mode="out-in" appear>
+          <component :is="Component" :key="route.fullPath" />
+        </transition>
+      </router-view>
+    </el-config-provider>
   </div>
 </template>
 
-<style scoped lang="scss">
+<style lang="scss">
 .button {
   height: 2em;
   will-change: filter;
