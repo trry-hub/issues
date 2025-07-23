@@ -1,7 +1,4 @@
-# wrangler.toml
 name = "issues"
 compatibility_date = "2025-07-23"
-main = "index.js"
-
-[assets]
-directory = "./dist"
+assets = { directory = "./dist" }
+# main = "index.js"  # 如果有自定义脚本
