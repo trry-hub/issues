@@ -10,7 +10,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import FaceDetectionModule from '@mediapipe/face_detection';
 import { Camera } from '@mediapipe/camera_utils';
 import { drawRectangle, drawLandmarks } from '@mediapipe/drawing_utils';
 
@@ -37,9 +36,23 @@ function drawResults(results: any) {
 onMounted(async () => {
   loading.value = true;
   try {
-    let FaceDetectionCtor: any = FaceDetectionModule;
-    if (FaceDetectionModule && typeof FaceDetectionModule === 'object' && 'FaceDetection' in FaceDetectionModule) {
-      FaceDetectionCtor = FaceDetectionModule.FaceDetection;
+    const mod = await import('@mediapipe/face_detection');
+    console.log('mod:', mod);
+    let FaceDetectionCtor: any = null;
+    if (mod.FaceDetection && typeof mod.FaceDetection === 'function') {
+      FaceDetectionCtor = mod.FaceDetection;
+    } else if (mod.default && mod.default.FaceDetection && typeof mod.default.FaceDetection === 'function') {
+      FaceDetectionCtor = mod.default.FaceDetection;
+    } else if (mod.default && typeof mod.default === 'function') {
+      FaceDetectionCtor = mod.default;
+    } else {
+      throw new Error(
+        'No valid FaceDetection constructor found. ' +
+        'mod keys: ' + Object.keys(mod).join(', ') +
+        ', mod.default keys: ' + (mod.default ? Object.keys(mod.default).join(', ') : 'none') +
+        ', typeof mod: ' + typeof mod +
+        ', typeof mod.default: ' + typeof mod.default
+      );
     }
     faceDetection = new FaceDetectionCtor({
       locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
