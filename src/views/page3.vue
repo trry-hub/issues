@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import * as FaceDetectionModule from '@mediapipe/face_detection';
+import FaceDetectionModule from '@mediapipe/face_detection';
 import { Camera } from '@mediapipe/camera_utils';
 import { drawRectangle, drawLandmarks } from '@mediapipe/drawing_utils';
 
@@ -37,10 +37,9 @@ function drawResults(results: any) {
 onMounted(async () => {
   loading.value = true;
   try {
-    console.log('FaceDetectionModule:', FaceDetectionModule);
-    let FaceDetectionCtor = FaceDetectionModule.FaceDetection || FaceDetectionModule;
-    if (typeof FaceDetectionCtor !== 'function') {
-      throw new Error('FaceDetection constructor not found. Module exports: ' + Object.keys(FaceDetectionModule).join(', '));
+    let FaceDetectionCtor: any = FaceDetectionModule;
+    if (FaceDetectionModule && typeof FaceDetectionModule === 'object' && 'FaceDetection' in FaceDetectionModule) {
+      FaceDetectionCtor = FaceDetectionModule.FaceDetection;
     }
     faceDetection = new FaceDetectionCtor({
       locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
