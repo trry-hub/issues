@@ -108,8 +108,10 @@ async function loadModel() {
     model = await faceLandmarksDetection.createDetector(
       faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
       {
+        // runtime: 'mediapipe',
+        // solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619',
         runtime: 'mediapipe',
-        solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619',
+        solutionPath: 'https://cdn.jsdelivr.net/npm/@medamine7/mediapipe_face_mesh@0.4.1633559619',
         maxFaces: 1,
         refineLandmarks: false
       }
