@@ -11,6 +11,7 @@ eruda.init()
   <div>
     <button class="button" @click="router.push({ name: 'page1' })">page1</button>
     <button class="button" @click="router.push({ name: 'page2' })">page2</button>
+    <button class="button" @click="router.push({ name: 'page3' })">page3</button>
     <hr>
     <router-view v-slot="{ Component, route }">
       <transition name="fade" mode="out-in" appear>
