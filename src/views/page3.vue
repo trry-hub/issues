@@ -19,7 +19,7 @@ const canvas = ref<HTMLCanvasElement | null>(null);
 const loading = ref(true);
 const error = ref('');
 let camera: Camera | null = null;
-let faceDetection: FaceDetection | null = null;
+let faceDetection: any = null;
 
 function drawResults(results: any) {
   if (!canvas.value) return;
@@ -37,8 +37,8 @@ function drawResults(results: any) {
 onMounted(async () => {
   loading.value = true;
   try {
-    faceDetection = new FaceDetection({
-      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
+    faceDetection = new FaceDetection.FaceDetection({
+      locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
     });
     faceDetection.setOptions({
       model: 'short',
