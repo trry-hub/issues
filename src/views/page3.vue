@@ -10,79 +10,90 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { Camera } from '@mediapipe/camera_utils';
-import { drawRectangle, drawLandmarks } from '@mediapipe/drawing_utils';
+// @ts-expect-error: no types for blazeface
+import * as blazeface from '@tensorflow-models/blazeface';
+import '@tensorflow/tfjs-backend-webgl';
 
 const video = ref<HTMLVideoElement | null>(null);
 const canvas = ref<HTMLCanvasElement | null>(null);
 const loading = ref(true);
 const error = ref('');
-let camera: Camera | null = null;
-let faceDetection: any = null;
+let stream: MediaStream | null = null;
+let model: blazeface.BlazeFaceModel | null = null;
+let detectInterval: number | null = null;
 
-function drawResults(results: any) {
+async function startVideo() {
+  if (!video.value) return;
+  stream = await navigator.mediaDevices.getUserMedia({ video: { width: 480, height: 360 } });
+  video.value.srcObject = stream;
+}
+
+function drawResults(predictions: blazeface.NormalizedFace[]) {
   if (!canvas.value) return;
   const ctx = canvas.value.getContext('2d');
   if (!ctx) return;
   ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
-  if (results.detections && results.detections.length > 0) {
-    for (const detection of results.detections) {
-      drawRectangle(ctx, detection.boundingBox, { color: '#00FF00', lineWidth: 2 });
-      drawLandmarks(ctx, detection.landmarks, { color: '#FF0000', radius: 2 });
+  ctx.strokeStyle = '#00FF00';
+  ctx.lineWidth = 2;
+  for (const prediction of predictions) {
+    let topLeft: [number, number];
+    let bottomRight: [number, number];
+    if (Array.isArray(prediction.topLeft)) {
+      topLeft = prediction.topLeft as [number, number];
+    } else if (prediction.topLeft && typeof prediction.topLeft.arraySync === 'function') {
+      const arr = prediction.topLeft.arraySync();
+      topLeft = [arr[0], arr[1]];
+    } else {
+      continue;
+    }
+    if (Array.isArray(prediction.bottomRight)) {
+      bottomRight = prediction.bottomRight as [number, number];
+    } else if (prediction.bottomRight && typeof prediction.bottomRight.arraySync === 'function') {
+      const arr = prediction.bottomRight.arraySync();
+      bottomRight = [arr[0], arr[1]];
+    } else {
+      continue;
+    }
+    const [x, y] = topLeft;
+    const [w, h] = bottomRight;
+    ctx.strokeRect(x, y, w - x, h - y);
+    // 绘制关键点
+    if (prediction.landmarks) {
+      ctx.fillStyle = '#FF0000';
+      for (const [lx, ly] of prediction.landmarks as [number, number][]) {
+        ctx.beginPath();
+        ctx.arc(lx, ly, 2, 0, 2 * Math.PI);
+        ctx.fill();
+      }
     }
   }
+}
+
+async function detectFace() {
+  if (!video.value || !model) return;
+  const predictions = await model.estimateFaces(video.value, false);
+  drawResults(predictions);
 }
 
 onMounted(async () => {
   loading.value = true;
   try {
-    const mod = await import('@mediapipe/face_detection');
-    console.log('mod:', mod);
-    let FaceDetectionCtor: any = null;
-    if (mod.FaceDetection && typeof mod.FaceDetection === 'function') {
-      FaceDetectionCtor = mod.FaceDetection;
-    } else if (mod.default && mod.default.FaceDetection && typeof mod.default.FaceDetection === 'function') {
-      FaceDetectionCtor = mod.default.FaceDetection;
-    } else if (mod.default && typeof mod.default === 'function') {
-      FaceDetectionCtor = mod.default;
-    } else {
-      throw new Error(
-        'No valid FaceDetection constructor found. ' +
-        'mod keys: ' + Object.keys(mod).join(', ') +
-        ', mod.default keys: ' + (mod.default ? Object.keys(mod.default).join(', ') : 'none') +
-        ', typeof mod: ' + typeof mod +
-        ', typeof mod.default: ' + typeof mod.default
-      );
-    }
-    faceDetection = new FaceDetectionCtor({
-      locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
-    });
-    faceDetection.setOptions({
-      model: 'short',
-      minDetectionConfidence: 0.5
-    });
-    faceDetection.onResults(drawResults);
-
-    if (video.value) {
-      camera = new Camera(video.value, {
-        onFrame: async () => {
-          if (faceDetection && video.value) {
-            await faceDetection.send({ image: video.value });
-          }
-        },
-        width: 480,
-        height: 360
-      });
-      await camera.start();
-    }
+    await startVideo();
+    model = await blazeface.load();
+    detectInterval = window.setInterval(detectFace, 100);
     loading.value = false;
-  } catch (e) {
-    error.value = '初始化失败: ' + (e as Error).message;
+  } catch (e: any) {
+    error.value = '初始化失败: ' + e.message;
   }
 });
 
 onBeforeUnmount(() => {
-  if (camera) camera.stop();
+  if (stream) {
+    stream.getTracks().forEach(track => track.stop());
+  }
+  if (detectInterval) {
+    clearInterval(detectInterval);
+  }
 });
 </script>
 

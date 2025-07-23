@@ -9,10 +9,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@mediapipe/camera_utils": "^0.3.1675466862",
-    "@mediapipe/drawing_utils": "^0.3.1675466124",
-    "@mediapipe/face_detection": "^0.4.1646425229",
+    "@tensorflow-models/blazeface": "^0.1.0",
+    "@tensorflow/tfjs": "^4.22.0",
+    "@tensorflow/tfjs-backend-cpu": "^4.22.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.22.0",
+    "@tensorflow/tfjs-core": "^4.22.0",
     "eruda": "^3.4.0",
+    "face-api.js": "^0.22.2",
     "vue": "^3.5.12",
     "vue-router": "^4.4.5"
   },
