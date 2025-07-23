@@ -108,7 +108,7 @@ async function loadModel() {
       faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
       {
         runtime: 'mediapipe',
-        solutionPath: 'https://cdnfile-tx.yaomaitong.cn/cdn/npm/@mediapipe/face_mesh@0.4.1633559619',
+        solutionPath: '/mediapipe/face_mesh-0.4.1633559619',
         maxFaces: 1,
         refineLandmarks: false
       }
