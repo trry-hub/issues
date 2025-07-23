@@ -108,9 +108,9 @@ async function loadModel() {
     model = await faceLandmarksDetection.createDetector(
       faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
       {
-        // runtime: 'mediapipe',
-        // solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619',
-        runtime: 'tfjs',
+        runtime: 'mediapipe',
+        solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619',
+        // runtime: 'tfjs',
         maxFaces: 1,
         refineLandmarks: false
       }
