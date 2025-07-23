@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref,useTemplateRef,nextTick, onMounted, onBeforeUnmount } from 'vue';
+import { ref, useTemplateRef, nextTick, onMounted, onBeforeUnmount } from 'vue';
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
 import '@tensorflow/tfjs-backend-webgl';
 
@@ -26,10 +26,10 @@ const videoSize = ref({ width: 300, height: 300 });
 
 async function startVideo() {
   if (!videoContainer.value) return;
-  stream = await navigator.mediaDevices.getUserMedia({ 
+  stream = await navigator.mediaDevices.getUserMedia({
     audio: false,
-    video: { 
-      width: videoSize.value.width, 
+    video: {
+      width: videoSize.value.width,
       height: videoSize.value.height,
       facingMode: 'user'
     },
@@ -74,7 +74,12 @@ async function detectFace() {
 async function loadModel() {
   model = await faceLandmarksDetection.createDetector(
     faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
-    { runtime: 'tfjs', refineLandmarks: true }
+    {
+      runtime: 'mediapipe',
+      solutionPath: 'https://cdnfile-tx.yaomaitong.cn/cdn/npm/@mediapipe/face_mesh@0.4.1633559619',
+      maxFaces: 1,
+      refineLandmarks: false
+    }
   );
 }
 
