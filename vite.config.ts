@@ -10,11 +10,6 @@ export default defineConfig({
   plugins: [
     vue(),
   ],
-  build: {
-    rollupOptions: {
-      external: ['@mediapipe/face_mesh'],
-    }
-  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
