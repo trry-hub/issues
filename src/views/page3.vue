@@ -25,22 +25,42 @@ let model: faceLandmarksDetection.FaceLandmarksDetector | null = null;
 const videoSize = ref({ width: 300, height: 300 });
 
 async function startVideo() {
-  if (!videoContainer.value) return;
-  stream = await navigator.mediaDevices.getUserMedia({
-    audio: false,
-    video: {
-      width: videoSize.value.width,
-      height: videoSize.value.height,
-      facingMode: 'user'
-    },
-  });
-  video.value && (video.value.srcObject = stream);
+  console.log('[startVideo] called');
+  if (!videoContainer.value) {
+    console.error('[startVideo] videoContainer is null');
+    return;
+  }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: false,
+      video: {
+        width: videoSize.value.width,
+        height: videoSize.value.height,
+        facingMode: 'user'
+      },
+    });
+    if (video.value) {
+      video.value.srcObject = stream;
+      console.log('[startVideo] stream set to video');
+    } else {
+      console.error('[startVideo] video ref is null');
+    }
+  } catch (e) {
+    console.error('[startVideo] getUserMedia error:', e);
+    throw e;
+  }
 }
 
 function drawResults(faces: faceLandmarksDetection.Face[]) {
-  if (!canvas.value) return;
+  if (!canvas.value) {
+    console.error('[drawResults] canvas is null');
+    return;
+  }
   const ctx = canvas.value.getContext('2d');
-  if (!ctx) return;
+  if (!ctx) {
+    console.error('[drawResults] ctx is null');
+    return;
+  }
   ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
   ctx.strokeStyle = '#00FF00';
   ctx.lineWidth = 2;
@@ -62,26 +82,42 @@ let detecting = false;
 async function detectFace() {
   if (detecting) return;
   detecting = true;
-  if (!video.value || !model) {
+  if (!video.value) {
+    console.error('[detectFace] video ref is null');
     detecting = false;
     return;
   }
-  const faces = await model.estimateFaces(video.value);
-  drawResults(faces);
+  if (!model) {
+    console.error('[detectFace] model is null');
+    detecting = false;
+    return;
+  }
+  try {
+    const faces = await model.estimateFaces(video.value);
+    drawResults(faces);
+  } catch (e) {
+    console.error('[detectFace] estimateFaces error:', e);
+  }
   detecting = false;
 }
 
 async function loadModel() {
-  model = await faceLandmarksDetection.createDetector(
-    faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
-    {
-      runtime: 'mediapipe',
-      // 'https://cdnfile-tx.yaomaitong.cn/cdn/npm/@mediapipe/face_mesh@0.4.1633559619'
-      solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619', // 指向 public 目录下的静态资源
-      maxFaces: 1,
-      refineLandmarks: false
-    }
-  );
+  console.log('[loadModel] start');
+  try {
+    model = await faceLandmarksDetection.createDetector(
+      faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
+      {
+        runtime: 'mediapipe',
+        solutionPath: 'https://cdnfile-tx.yaomaitong.cn/cdn/npm/@mediapipe/face_mesh@0.4.1633559619',
+        maxFaces: 1,
+        refineLandmarks: false
+      }
+    );
+    console.log('[loadModel] model loaded:', model);
+  } catch (e) {
+    console.error('[loadModel] createDetector error:', e);
+    throw e;
+  }
 }
 
 let rafId: number | null = null;
@@ -93,23 +129,28 @@ function loop() {
 
 onMounted(async () => {
   loading.value = true;
+  console.log('[onMounted] start');
   try {
     await nextTick();
     await startVideo();
     await loadModel();
     loop(); // 启动检测循环
     loading.value = false;
+    console.log('[onMounted] success');
   } catch (e: any) {
     error.value = '初始化失败: ' + (e?.message || e);
+    console.error('[onMounted] error:', e);
   }
 });
 
 onBeforeUnmount(() => {
   if (stream) {
     stream.getTracks().forEach(track => track.stop());
+    console.log('[onBeforeUnmount] stopped stream');
   }
   if (rafId) {
     cancelAnimationFrame(rafId);
+    console.log('[onBeforeUnmount] cancelled raf');
   }
 });
 </script>
