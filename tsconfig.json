@@ -22,8 +22,7 @@
       "resolveJsonModule": true,
       "types": [
         "@types/node",
-        "vite/client",
-        "element-plus/global"
+        "vite/client"
       ],
       "allowImportingTsExtensions": true,
       "allowJs": false,
