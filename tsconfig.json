@@ -15,10 +15,15 @@
         "@/*": [
           "src/*"
         ],
+        "#/*": [
+          "typings/*"
+        ]
       },
       "resolveJsonModule": true,
       "types": [
-        "vite/client"
+        "@types/node",
+        "vite/client",
+        "element-plus/global"
       ],
       "allowImportingTsExtensions": true,
       "allowJs": false,

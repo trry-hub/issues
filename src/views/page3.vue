@@ -10,7 +10,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-// @ts-expect-error: no types for blazeface
 import * as blazeface from '@tensorflow-models/blazeface';
 import '@tensorflow/tfjs-backend-webgl';
 
