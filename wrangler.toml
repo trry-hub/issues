@@ -2,3 +2,12 @@ name = "issues"
 compatibility_date = "2025-07-23"
 assets = { directory = "./dist" }
 main = "index.js"  # 如果有自定义脚本
+
+[site]
+bucket = "./dist"  # 静态资源目录
+entry-point = "./"  # Worker 入口目录
+
+# 必须添加 ASSETS 绑定
+[[unsafe.bindings]]
+name = "ASSETS"  # 必须全大写
+type = "kv_namespace"  # 使用 KV 存储绑定
