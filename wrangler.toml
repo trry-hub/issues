@@ -1,4 +1,4 @@
 name = "issues"
 compatibility_date = "2025-07-23"
-assets = "./dist"
-main = "index.js"
+assets = { directory = "./dist" }
+main = "index.js"  # 如果有自定义脚本
