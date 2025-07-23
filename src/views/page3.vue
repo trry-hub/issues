@@ -37,7 +37,12 @@ function drawResults(results: any) {
 onMounted(async () => {
   loading.value = true;
   try {
-    faceDetection = new FaceDetectionModule.FaceDetection({
+    console.log('FaceDetectionModule:', FaceDetectionModule);
+    let FaceDetectionCtor = FaceDetectionModule.FaceDetection || FaceDetectionModule;
+    if (typeof FaceDetectionCtor !== 'function') {
+      throw new Error('FaceDetection constructor not found. Module exports: ' + Object.keys(FaceDetectionModule).join(', '));
+    }
+    faceDetection = new FaceDetectionCtor({
       locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
     });
     faceDetection.setOptions({
