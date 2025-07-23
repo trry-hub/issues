@@ -4,7 +4,7 @@ compatibility_date = "2025-07-23"
 main = "index.js"
 
 [assets]
-bucket = "./dist"
+directory = "./dist"
 
 [[kv_namespaces]]
 binding = "ASSETS"
