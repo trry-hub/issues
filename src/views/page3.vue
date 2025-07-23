@@ -110,8 +110,7 @@ async function loadModel() {
       {
         // runtime: 'mediapipe',
         // solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619',
-        runtime: 'mediapipe',
-        solutionPath: 'https://cdn.jsdelivr.net/npm/@medamine7/mediapipe_face_mesh@0.4.1633559619',
+        runtime: 'tfjs',
         maxFaces: 1,
         refineLandmarks: false
       }
