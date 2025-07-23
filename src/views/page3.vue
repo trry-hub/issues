@@ -37,7 +37,7 @@ function drawResults(results: any) {
 onMounted(async () => {
   loading.value = true;
   try {
-    faceDetection = new FaceDetection.FaceDetection({
+    faceDetection = new FaceDetection({
       locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
     });
     faceDetection.setOptions({
