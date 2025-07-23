@@ -12,7 +12,7 @@ export default defineConfig({
   ],
   build: {
     rollupOptions: {
-      external: ['@mediapipe/face_mesh', '@tensorflow-models/face-landmarks-detection'],
+      external: ['@mediapipe/face_mesh'],
     }
   },
   resolve: {
