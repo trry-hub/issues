@@ -5,7 +5,3 @@ main = "index.js"
 
 [assets]
 directory = "./dist"
-
-[[kv_namespaces]]
-binding = "ASSETS"
-id = "abc123xyz"  # 替换为你的 KV namespace ID
