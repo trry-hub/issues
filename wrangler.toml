@@ -1,0 +1,4 @@
+name = "issues"
+compatibility_date = "2025-07-23"
+assets = "./dist"
+main = "index.js"
