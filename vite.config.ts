@@ -10,6 +10,11 @@ export default defineConfig({
   plugins: [
     vue(),
   ],
+  build: {
+    rollupOptions: {
+      external: ['@mediapipe/face_mesh', '@tensorflow-models/face-landmarks-detection'],
+    }
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
