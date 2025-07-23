@@ -22,12 +22,18 @@ const loading = ref(true);
 const error = ref('');
 let stream: MediaStream | null = null;
 let model: faceLandmarksDetection.FaceLandmarksDetector | null = null;
-let detectInterval: number | null = null;
-const videoSize = ref({ width: 350, height: 360 });
+const videoSize = ref({ width: 300, height: 300 });
 
 async function startVideo() {
   if (!videoContainer.value) return;
-  stream = await navigator.mediaDevices.getUserMedia({ video: { width: videoSize.value.width, height: videoSize.value.height } });
+  stream = await navigator.mediaDevices.getUserMedia({ 
+    audio: false,
+    video: { 
+      width: videoSize.value.width, 
+      height: videoSize.value.height,
+      facingMode: 'user'
+    },
+  });
   video.value && (video.value.srcObject = stream);
 }
 
