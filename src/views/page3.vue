@@ -10,7 +10,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { FaceDetection } from '@mediapipe/face_detection';
+import * as FaceDetectionModule from '@mediapipe/face_detection';
 import { Camera } from '@mediapipe/camera_utils';
 import { drawRectangle, drawLandmarks } from '@mediapipe/drawing_utils';
 
@@ -37,7 +37,7 @@ function drawResults(results: any) {
 onMounted(async () => {
   loading.value = true;
   try {
-    faceDetection = new FaceDetection({
+    faceDetection = new FaceDetectionModule.FaceDetection({
       locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection/${file}`
     });
     faceDetection.setOptions({
