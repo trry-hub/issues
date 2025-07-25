@@ -268,8 +268,15 @@ onMounted(async () => {
       },
       audio: false
     })
-    video.value!.srcObject = stream
-    video.value!.onloadedmetadata = () => {
+    
+    // 确保 video ref 存在
+    if (!video.value) {
+      error.value = 'Video element not found'
+      return
+    }
+    
+    video.value.srcObject = stream
+    video.value.onloadedmetadata = () => {
       // 捕获原始视频尺寸
       originalWidth.value = video.value!.videoWidth
       originalHeight.value = video.value!.videoHeight
@@ -287,7 +294,15 @@ onMounted(async () => {
 })
 
 async function renderLoop() {
-  if (!video.value || !canvas.value || !faceLandmarker || !running) return
+  // 添加更严格的 null 检查
+  if (!video.value || !canvas.value || !faceLandmarker || !running) {
+    // 如果 video 为 null，延迟重试而不是直接返回
+    if (!video.value) {
+      setTimeout(renderLoop, 100)
+    }
+    return
+  }
+  
   const ctx = canvas.value.getContext('2d')
   if (!ctx) return
 
