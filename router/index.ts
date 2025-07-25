@@ -22,7 +22,7 @@ const router = createRouter({
     component: () => import('@/views/page3.vue'),
   }, { 
     path: '/mediapipe-face-demo', 
-    component: () => import('@/views/mediapipe-face-demo.vue') 
+    component: () => import('@/views/mediapipe/face-demo.vue') 
   },
   ],
 })
