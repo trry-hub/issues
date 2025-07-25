@@ -1,7 +1,7 @@
 <template>
-  <div class="video-container">
-    <video ref="video" autoplay playsinline width="320" height="240" style="border:1px solid #ccc"></video>
-    <canvas ref="canvas" width="320" height="240" style="position:absolute;left:0;top:0;"></canvas>
+  <div class="video-container" :style="{ width: width + 'px', height: height + 'px' }">
+    <video ref="video" autoplay playsinline style="border:1px solid #ccc"></video>
+    <canvas ref="canvas" style="position:absolute;left:0;top:0;"></canvas>
     <div v-if="error" style="color:red;">{{ error }}</div>
   </div>
 </template>
@@ -16,6 +16,8 @@ const error = ref('')
 let faceLandmarker: FaceLandmarker | null = null
 let stream: MediaStream | null = null
 let running = true
+const width = 320
+const height = 240
 
 onMounted(async () => {
   try {
@@ -34,13 +36,16 @@ onMounted(async () => {
     // 获取摄像头
     stream = await navigator.mediaDevices.getUserMedia({ 
       video: {
-        facingMode: 'user'
-      }
+        facingMode: 'user',
+        // width,
+        // height
+      },
+      audio: false
     })
     video.value!.srcObject = stream
     video.value!.onloadedmetadata = () => {
       video.value!.play()
-      console.log(`🚀 ~ video.value:`, video.value)
+      console.log(`🚀 ~ video.value:`, video.value?.videoWidth, video.value?.videoHeight)
       renderLoop()
     }
   } catch (e: any) {
@@ -55,8 +60,7 @@ async function renderLoop() {
 
   // 检测人脸
   const results = faceLandmarker.detectForVideo(video.value, performance.now())
-  // console.log(`🚀 ~ renderLoop ~ results:`, results.faceLandmarks)
-  ctx.clearRect(0, 0, canvas.value.width, canvas.value.height)
+  ctx.clearRect(0, 0, width, height)
   if (results.faceLandmarks) {
     const drawingUtils = new DrawingUtils(ctx)
     for (const landmarks of results.faceLandmarks) {
@@ -76,7 +80,9 @@ onBeforeUnmount(() => {
 <style lang="scss" scoped>
 .video-container {
   position: relative;
-  width: 320px;
-  height: 240px;
+  video, canvas {
+    width: 100%;
+    height: 100%;
+  }
 }
 </style>
