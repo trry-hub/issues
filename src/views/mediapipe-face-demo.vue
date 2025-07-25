@@ -60,8 +60,8 @@ async function renderLoop() {
   if (results.faceLandmarks) {
     const drawingUtils = new DrawingUtils(ctx)
     for (const landmarks of results.faceLandmarks) {
-      drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_TESSELATION, { color: '#0FF', lineWidth: 1 })
-      drawingUtils.drawLandmarks(landmarks, { color: '#3D60E3', radius: 1 })
+      drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_TESSELATION, { color: '#0FF', lineWidth: 0.2 })
+      drawingUtils.drawLandmarks(landmarks, { color: '#3D60E3', radius: 0.2 })
     }
   }
   requestAnimationFrame(renderLoop)
