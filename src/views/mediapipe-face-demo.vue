@@ -1,7 +1,7 @@
 <template>
   <div class="video-container" :style="{ width: width + 'px', height: height + 'px' }">
     <video ref="video" autoplay playsinline style="border:1px solid #ccc"></video>
-    <canvas ref="canvas" style="position:absolute;left:0;top:0;"></canvas>
+    <canvas ref="canvas"></canvas>
     <div v-if="error" style="color:red;">{{ error }}</div>
   </div>
 </template>
@@ -16,8 +16,11 @@ const error = ref('')
 let faceLandmarker: FaceLandmarker | null = null
 let stream: MediaStream | null = null
 let running = true
-const width = 640
-const height = 480
+const width = 320
+const height = 320
+// Add refs for original dimensions
+const originalWidth = ref(0)
+const originalHeight = ref(0)
 
 onMounted(async () => {
   try {
@@ -30,21 +33,27 @@ onMounted(async () => {
         modelAssetPath: 'https://storage.googleapis.com/mediapipe-assets/face_landmarker.task'
       },
       runningMode: 'VIDEO',
-      numFaces: 1
+      numFaces: 1,
     })
 
     // 获取摄像头
     stream = await navigator.mediaDevices.getUserMedia({ 
       video: {
         facingMode: 'user',
-        width,
-        height
       },
       audio: false
     })
     video.value!.srcObject = stream
     video.value!.onloadedmetadata = () => {
-      console.log(`🚀 ~ video.value:`, video.value?.videoWidth, video.value?.videoHeight)
+      // Capture original video dimensions
+      originalWidth.value = video.value!.videoWidth
+      originalHeight.value = video.value!.videoHeight
+      
+      // Set canvas size to match original video dimensions
+      if (canvas.value) {
+        canvas.value.width = originalWidth.value
+        canvas.value.height = originalHeight.value
+      }
       renderLoop()
     }
   } catch (e: any) {
@@ -57,14 +66,26 @@ async function renderLoop() {
   const ctx = canvas.value.getContext('2d')
   if (!ctx) return
 
-  // 检测人脸
+  // Use original dimensions for calculations
+  ctx.clearRect(0, 0, originalWidth.value, originalHeight.value)
+  
   const results = faceLandmarker.detectForVideo(video.value, performance.now())
-  ctx.clearRect(0, 0, width, height)
   if (results.faceLandmarks) {
     const drawingUtils = new DrawingUtils(ctx)
     for (const landmarks of results.faceLandmarks) {
-      drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_TESSELATION, { color: '#0FF', lineWidth: 0.2 })
-      drawingUtils.drawLandmarks(landmarks, { color: '#3D60E3', radius: 0.1 })
+      // Draw using original dimensions
+      drawingUtils.drawConnectors(
+        landmarks, 
+        FaceLandmarker.FACE_LANDMARKS_TESSELATION, 
+        { color: '#0FF', lineWidth: 0.2 }
+      )
+      drawingUtils.drawLandmarks(
+        landmarks, 
+        { 
+          color: '#3D60E3', 
+          radius: Math.max(originalWidth.value, originalHeight.value) * 0.001 
+        }
+      )
     }
   }
   requestAnimationFrame(renderLoop)
@@ -82,7 +103,12 @@ onBeforeUnmount(() => {
   video, canvas {
     width: 100%;
     height: 100%;
-    border: 1px solid #ccc;
+    object-fit: cover;
+  }
+  canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
   }
 }
 </style>
