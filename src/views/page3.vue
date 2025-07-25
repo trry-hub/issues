@@ -104,13 +104,12 @@ async function detectFace() {
 async function loadModel() {
   console.log('[loadModel] start');
   try {
-    await ensureFaceMeshScript(); // 确保全局变量已挂载
     model = await faceLandmarksDetection.createDetector(
       faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
       {
-        runtime: 'mediapipe',
-        solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619',
-        // runtime: 'tfjs',
+        // runtime: 'mediapipe',
+        // solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619',
+        runtime: 'tfjs',
         maxFaces: 1,
         refineLandmarks: false
       }
@@ -127,19 +126,6 @@ let rafId: number | null = null;
 function loop() {
   detectFace();
   rafId = requestAnimationFrame(loop);
-}
-
-async function ensureFaceMeshScript() {
-  // @ts-ignore
-  if (!window.FaceMesh) {
-    await new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh.js';
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.appendChild(script);
-    });
-  }
 }
 
 onMounted(async () => {
@@ -169,7 +155,6 @@ onBeforeUnmount(() => {
   }
 });
 </script>
-
 <style scoped lang="scss">
 .video-container {
   width: 100%;

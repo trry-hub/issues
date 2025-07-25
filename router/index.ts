@@ -3,7 +3,8 @@ import { createRouter, createWebHashHistory } from 'vue-router'
 const history = createWebHashHistory()
 const router = createRouter({
   history,
-  routes: [ {
+  routes: [ 
+    {
     path: '/',
     name: 'index',
     component: () => import('@/views/page3.vue'),
@@ -19,7 +20,11 @@ const router = createRouter({
     path: '/page3',
     name: 'page3',
     component: () => import('@/views/page3.vue'),
-  }],
+  }, { 
+    path: '/mediapipe-face-demo', 
+    component: () => import('@/views/mediapipe-face-demo.vue') 
+  },
+  ],
 })
 
 export default router

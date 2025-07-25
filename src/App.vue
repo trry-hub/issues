@@ -9,9 +9,12 @@ eruda.init()
 
 <template>
   <div>
-    <button class="button" @click="router.push({ name: 'page1' })">page1</button>
-    <button class="button" @click="router.push({ name: 'page2' })">page2</button>
-    <button class="button" @click="router.push({ name: 'page3' })">page3</button>
+    <div class="button-group">
+      <router-link to="/page1">page1</router-link>
+      <router-link to="/page2">page2</router-link>
+      <router-link to="/page3">page3</router-link>
+      <router-link to="/mediapipe-face-demo">mediapipe-face-demo</router-link>
+    </div>
     <hr>
     <router-view v-slot="{ Component, route }">
       <transition name="fade" mode="out-in" appear>
@@ -22,13 +25,11 @@ eruda.init()
 </template>
 
 <style scoped lang="scss">
-.button {
-  height: 2em;
-  will-change: filter;
-  margin-right: 10px;
-  transition: filter 300ms;
+.button-group {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
 }
-
 /* 主内容区动画 */
 .fade-enter-active,
 .slide-left-enter-active,
