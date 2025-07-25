@@ -255,7 +255,8 @@ onMounted(async () => {
     )
     faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
       baseOptions: {
-        modelAssetPath: 'https://storage.googleapis.com/mediapipe-assets/face_landmarker.task'
+        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
+        // modelAssetPath: 'https://storage.googleapis.com/mediapipe-assets/face_landmarker.task'
       },
       runningMode: 'VIDEO',
       numFaces: 1,

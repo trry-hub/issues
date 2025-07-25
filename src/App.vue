@@ -14,6 +14,7 @@ eruda.init()
       <router-link to="/page2">page2</router-link>
       <router-link to="/page3">page3</router-link>
       <router-link to="/mediapipe-face-demo">mediapipe-face-demo</router-link>
+      <router-link to="/mediapipe-face-landmarker-demo">mediapipe-face-landmarker-demo</router-link>
     </div>
     <hr>
     <router-view v-slot="{ Component, route }">
