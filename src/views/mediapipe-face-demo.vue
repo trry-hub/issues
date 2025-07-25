@@ -16,8 +16,8 @@ const error = ref('')
 let faceLandmarker: FaceLandmarker | null = null
 let stream: MediaStream | null = null
 let running = true
-const width = 320
-const height = 240
+const width = 640
+const height = 480
 
 onMounted(async () => {
   try {
@@ -37,14 +37,13 @@ onMounted(async () => {
     stream = await navigator.mediaDevices.getUserMedia({ 
       video: {
         facingMode: 'user',
-        // width,
-        // height
+        width,
+        height
       },
       audio: false
     })
     video.value!.srcObject = stream
     video.value!.onloadedmetadata = () => {
-      video.value!.play()
       console.log(`🚀 ~ video.value:`, video.value?.videoWidth, video.value?.videoHeight)
       renderLoop()
     }
@@ -65,7 +64,7 @@ async function renderLoop() {
     const drawingUtils = new DrawingUtils(ctx)
     for (const landmarks of results.faceLandmarks) {
       drawingUtils.drawConnectors(landmarks, FaceLandmarker.FACE_LANDMARKS_TESSELATION, { color: '#0FF', lineWidth: 0.2 })
-      drawingUtils.drawLandmarks(landmarks, { color: '#3D60E3', radius: 0.2 })
+      drawingUtils.drawLandmarks(landmarks, { color: '#3D60E3', radius: 0.1 })
     }
   }
   requestAnimationFrame(renderLoop)
@@ -83,6 +82,7 @@ onBeforeUnmount(() => {
   video, canvas {
     width: 100%;
     height: 100%;
+    border: 1px solid #ccc;
   }
 }
 </style>
