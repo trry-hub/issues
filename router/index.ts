@@ -23,6 +23,9 @@ const router = createRouter({
   }, { 
     path: '/mediapipe-face-demo', 
     component: () => import('@/views/mediapipe/face-demo.vue') 
+  }, {
+    path: '/simple-face-demo',
+    component: () => import('@/views/mediapipe/simple-face-demo.vue')
   }
   ],
 })

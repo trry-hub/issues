@@ -14,6 +14,7 @@ eruda.init()
       <router-link to="/page2">page2</router-link>
       <router-link to="/page3">page3</router-link>
       <router-link to="/mediapipe-face-demo">mediapipe-face-demo</router-link>
+      <router-link to="/simple-face-demo">simple-face-demo</router-link>
     </div>
     <hr>
     <router-view v-slot="{ Component, route }">
@@ -27,7 +28,7 @@ eruda.init()
 <style scoped lang="scss">
 .button-group {
   display: flex;
-  flex-direction: row;
+  flex-wrap: wrap;
   gap: 10px;
 }
 /* 主内容区动画 */
