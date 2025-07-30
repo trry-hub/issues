@@ -13,6 +13,7 @@ eruda.init()
       <router-link to="/page1">page1</router-link>
       <router-link to="/page2">page2</router-link>
       <router-link to="/page3">page3</router-link>
+      <router-link to="/page3-copy">page3-copy</router-link>
       <router-link to="/mediapipe-face-demo">mediapipe-face-demo</router-link>
       <router-link to="/simple-face-demo">simple-face-demo</router-link>
     </div>

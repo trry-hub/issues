@@ -2,6 +2,16 @@
   <div class="flex flex-col items-center justify-center">
     <h2>人脸检测 Demo (MediaPipe FaceMesh)</h2>
     
+    <!-- 调试模式切换 -->
+    <div class="debug-controls mb-4">
+      <button 
+        @click="toggleDebugMode" 
+        :class="['debug-toggle', { 'active': debugMode }]"
+      >
+        {{ debugMode ? '关闭' : '开启' }}调试日志
+      </button>
+    </div>
+    
     <div class="video-container">
       <div v-if="isLoading" class="loading-state">
         <div class="loading-spinner"></div>
@@ -44,9 +54,34 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { 
   createFaceDetector, 
   startVideoStream, 
-  createDetectionLoop 
+  createDetectionLoop,
+  setDebugMode,
+  DEBUG_MODE
 } from '@/utils/tensorflow-face'
 import FaceVerification from '@/components/FaceVerification/index.vue'
+
+// 调试模式控制
+const debugMode = ref(DEBUG_MODE);
+
+// 切换调试模式
+function toggleDebugMode() {
+  debugMode.value = !debugMode.value;
+  setDebugMode(debugMode.value);
+}
+
+// 调试日志函数
+function debugLog(...args: any[]) {
+  if (debugMode.value) {
+    console.log(...args);
+  }
+}
+
+// 调试错误日志函数
+function debugError(...args: any[]) {
+  if (debugMode.value) {
+    console.error(...args);
+  }
+}
 
 // 组件引用
 const verificationRef = ref()
@@ -58,8 +93,8 @@ const getVideoAndCanvas = () => {
   if (verificationRef.value) {
     video.value = verificationRef.value.videoRef
     canvas.value = verificationRef.value.canvasRef
-    console.log('获取到 video ref:', video.value)
-    console.log('获取到 canvas ref:', canvas.value)
+    debugLog('获取到 video ref:', video.value)
+    debugLog('获取到 canvas ref:', canvas.value)
   }
 }
 
@@ -86,7 +121,7 @@ const selectedModel = ref({
 async function createFaceDetectorWithFallback() {
   try {
     detector = await createFaceDetector(isLoading, loadError)
-    console.log('人脸关键点检测器加载成功')
+    debugLog('人脸关键点检测器加载成功')
 
     // 自动启动摄像头
     await enableCam()
@@ -97,10 +132,10 @@ async function createFaceDetectorWithFallback() {
 
 // 重试加载
 async function retryLoading() {
-  console.log('重试加载 Face Detector...')
+  debugLog('重试加载 Face Detector...')
   try {
     detector = await createFaceDetector(isLoading, loadError)
-    console.log('人脸关键点检测器加载成功')
+    debugLog('人脸关键点检测器加载成功')
 
     // 自动启动摄像头
     await enableCam()
@@ -125,51 +160,127 @@ async function enableCam() {
     if (video.value) {
       video.value.srcObject = stream
       video.value.addEventListener("loadedmetadata", () => {
-        console.log('视频加载完成，尺寸:', video.value?.videoWidth, 'x', video.value?.videoHeight)
+        debugLog('视频加载完成，尺寸:', video.value?.videoWidth, 'x', video.value?.videoHeight)
         
         // 同步 canvas 尺寸
         if (verificationRef.value) {
           verificationRef.value.syncCanvasSize()
         }
         
-        startDetection()
+        // 等待视频开始播放后再启动检测
+        if (video.value) {
+          video.value.addEventListener("playing", () => {
+            debugLog('视频开始播放，启动检测')
+            startDetection()
+          }, { once: true })
+        }
       })
     }
   } catch (error) {
-    console.error('访问摄像头时出错:', error)
+    debugError('访问摄像头时出错:', error)
+  }
+}
+
+// 绘制关键点函数
+function drawLandmarks(landmarks: any[]) {
+  if (!canvas.value) {
+    debugError('[drawLandmarks] canvas is null');
+    return;
+  }
+
+  const ctx = canvas.value.getContext('2d');
+  if (!ctx) {
+    debugError('[drawLandmarks] ctx is null');
+    return;
+  }
+
+  // 只在第一次或尺寸变化时调整 canvas 尺寸
+  if (video.value) {
+    const videoWidth = video.value.videoWidth || video.value.clientWidth;
+    const videoHeight = video.value.videoHeight || video.value.clientHeight;
+    
+    if (canvas.value.width !== videoWidth || canvas.value.height !== videoHeight) {
+      debugLog(`[drawLandmarks] 调整 canvas 尺寸: ${canvas.value.width}x${canvas.value.height} -> ${videoWidth}x${videoHeight}`);
+      canvas.value.width = videoWidth;
+      canvas.value.height = videoHeight;
+    }
+  }
+
+  // 清除画布 - 只在有内容时清除
+  if (landmarks.length > 0) {
+    ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
+  } else {
+    return; // 如果没有关键点，直接返回，不进行绘制
+  }
+
+  // 检查视频是否有镜像变换 - 缓存结果
+  const computedStyle = window.getComputedStyle(video.value!);
+  const transform = computedStyle.transform;
+  const hasMirror = transform.includes('-1');
+
+  // 批量绘制关键点，减少状态切换
+  ctx.strokeStyle = '#00FF00';
+  ctx.lineWidth = 2;
+  ctx.fillStyle = '#FF0000';
+
+  // 使用路径批量绘制，提高性能
+  ctx.beginPath();
+  
+  landmarks.forEach((landmark: any) => {
+    // 如果视频有镜像变换，对关键点坐标也应用镜像
+    let x = landmark.x;
+    if (hasMirror) {
+      x = canvas.value!.width - x;
+    }
+    
+    ctx.moveTo(x + 1.5, landmark.y);
+    ctx.arc(x, landmark.y, 1.5, 0, 2 * Math.PI);
+  });
+  
+  ctx.fill();
+
+  // 减少日志输出频率
+  if (Math.random() < 0.1) { // 只输出 10% 的日志
+    debugLog(`[drawLandmarks] 绘制了 ${landmarks.length} 个关键点${hasMirror ? '（已应用镜像变换）' : ''}`);
   }
 }
 
 // 启动检测
 function startDetection() {
   if (!video.value || !canvas.value || !detector) {
-    console.error('启动检测失败：缺少必要的元素')
+    debugError('启动检测失败：缺少必要的元素')
     return
   }
 
-  console.log('启动人脸检测循环')
+  debugLog('启动人脸检测循环')
   
-  // 启动检测循环
+  // 启动检测循环 - 在 page3 中处理绘制
   stopDetection = createDetectionLoop(
     video.value, 
     detector, 
     canvas.value,
     (error) => {
-      console.error('检测错误:', error)
+      debugError('检测错误:', error)
     },
     (faces) => {
-      // 当检测到人脸时，调用验证组件的动作检测
-      if (verificationRef.value && faces.length > 0) {
-        // TensorFlow.js 返回的是 keypoints 数组，需要转换为 MediaPipe 格式
+      // 当检测到人脸时，绘制关键点并调用验证组件的动作检测
+      if (faces.length > 0) {
+        // 绘制关键点
         const landmarks = faces[0].keypoints.map((kp: any) => ({
           x: kp.x,
           y: kp.y,
           z: kp.z || 0
         }))
         
-        verificationRef.value.detectActions(landmarks)
+        drawLandmarks(landmarks);
+        
+        // 调用验证组件的动作检测
+        if (verificationRef.value) {
+          verificationRef.value.detectActions(landmarks)
+        }
       }
-    }
+    },
+    false // 不启用 tensorflow-face 的绘制，由 page3 自己处理
   )
 }
 
@@ -187,18 +298,18 @@ onBeforeUnmount(() => {
 
 // 事件处理
 function onVerificationComplete(success: boolean, steps: string[]) {
-  console.log('验证完成:', success, steps)
+  debugLog('验证完成:', success, steps)
   if (success) {
-    console.log('验证成功！')
+    debugLog('验证成功！')
   }
 }
 
 function onActionDetected(action: string) {
-  console.log('检测到动作:', action)
+  debugLog('检测到动作:', action)
 }
 
 function onVerificationStarted(steps: string[]) {
-  console.log('验证开始，步骤:', steps)
+  debugLog('验证开始，步骤:', steps)
 }
 
 function resetVerification() {
@@ -212,6 +323,31 @@ function resetVerification() {
 .video-container {
   text-align: center;
   margin-bottom: 20px;
+}
+
+.debug-controls {
+  margin-bottom: 1rem;
+  
+  .debug-toggle {
+    padding: 8px 16px;
+    border: 2px solid #007f8b;
+    background: white;
+    color: #007f8b;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+    
+    &:hover {
+      background: #007f8b;
+      color: white;
+    }
+    
+    &.active {
+      background: #007f8b;
+      color: white;
+    }
+  }
 }
 
 .loading-state,

@@ -12,8 +12,11 @@ const router = createRouter({
       path: '/page3',
       name: 'page3',
       component: () => import('@/views/page3.vue'),
+    }, {
+      path: '/page3-copy',
+      component: () => import('@/views/page3-copy.vue')
     }, { 
-      path: '/mediapipe-face-demo', 
+      path: '/mediapipe-face-demo',
       component: () => import('@/views/mediapipe/face-demo.vue') 
     }, {
       path: '/simple-face-demo',
