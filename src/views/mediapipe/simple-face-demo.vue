@@ -678,5 +678,4 @@ h2 {
   min-width: 40px;
   justify-content: center;
 }
-
 </style>

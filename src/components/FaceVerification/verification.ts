@@ -28,8 +28,8 @@ function distance(p1: {x: number, y: number}, p2: {x: number, y: number}): numbe
 }
 
 /**
- * 检测眨眼动作 - 优化版本
- * 原理：通过计算眼睛垂直开合度与眼宽的比值来判断，并添加眨眼次数验证
+ * 检测眨眼动作 - 重构版本
+ * 使用更简单可靠的检测逻辑
  * @param landmarks 面部关键点数组
  * @param requiredBlinkCount 需要的眨眼次数，默认为2
  * @returns 如果检测到足够的眨眼次数返回true，否则false
@@ -59,14 +59,14 @@ export function detectBlink(landmarks: any[], requiredBlinkCount: number = 2): b
   // 计算平均开合度
   const currentEyeOpenness = (normalizedLeft + normalizedRight) / 2;
   
-  // 优化的眨眼检测阈值
-  const blinkThreshold = 0.20; // 眨眼阈值
-  const openThreshold = 0.28;  // 眼睛睁开的阈值
+  // 重构后的眨眼检测阈值 - 更宽松
+  const blinkThreshold = 0.15; // 眨眼阈值 - 更宽松
+  const openThreshold = 0.22;  // 眼睛睁开的阈值 - 更宽松
   
   const currentTime = Date.now();
   const timeSinceLastBlink = currentTime - blinkState.lastBlinkTime;
   
-  // 检测眨眼状态变化
+  // 简化的眨眼检测逻辑
   if (currentEyeOpenness < blinkThreshold && !blinkState.isBlinking) {
     // 开始眨眼
     blinkState.isBlinking = true;
@@ -96,13 +96,13 @@ export function detectBlink(landmarks: any[], requiredBlinkCount: number = 2): b
     }
   }
   
-  // 如果超过8秒没有眨眼，重置连续计数
-  if (timeSinceLastBlink > 8000) {
+  // 如果超过5秒没有眨眼，重置连续计数 - 缩短时间
+  if (timeSinceLastBlink > 5000) {
     blinkState.consecutiveBlinkCount = 0;
   }
   
-  // 调试信息
-  if (process.env.NODE_ENV === 'development' && currentTime % 1000 < 16) { // 约1fps
+  // 调试信息 - 减少频率
+  if (process.env.NODE_ENV === 'development' && currentTime % 2000 < 16) { // 约0.5fps
     console.log('眨眼检测状态:', {
       eyeOpenness: currentEyeOpenness.toFixed(3),
       isBlinking: blinkState.isBlinking,

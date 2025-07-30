@@ -73,6 +73,33 @@ const selectedModel = ref({
   videoWidth: 320 // 更新为圆形尺寸
 })
 
+// 从验证组件获取状态
+const verificationState = computed(() => verificationRef.value?.verificationState || {
+  isVerifying: false,
+  currentStep: -1,
+  steps: [],
+  completed: false,
+  showSuccess: false,
+  actionConfirmed: false
+})
+
+const currentAction = computed(() => verificationRef.value?.currentAction || null)
+const isDetecting = computed(() => verificationRef.value?.isDetecting || false)
+
+// 当前动作的中文名称
+const currentActionName = computed(() => {
+  if (!currentAction.value) return '无'
+  const map: Record<string, string> = {
+    blink: '眨眼',
+    mouthOpen: '张嘴',
+    headLeft: '向左转头',
+    headRight: '向右转头',
+    headUp: '抬头',
+    headDown: '低头'
+  }
+  return map[currentAction.value] || currentAction.value
+})
+
 // 初始化人脸检测器
 async function createFaceLandmarkerWithFallback() {
   try {
