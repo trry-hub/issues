@@ -103,7 +103,8 @@ function startVerification() {
   verification.resetBlinkState();
 
   // 生成随机动作序列 (3-5个动作)
-  const stepCount = 3 + Math.floor(Math.random() * 3);
+  // const stepCount = 3 + Math.floor(Math.random() * 3);
+  const stepCount = 5;
   const shuffledActions = [...props.actions].sort(() => Math.random() - 0.5);
   verificationState.value.steps = shuffledActions.slice(0, stepCount);
 

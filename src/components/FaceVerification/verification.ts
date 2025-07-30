@@ -8,13 +8,27 @@ const LANDMARK_INDICES = {
   CHIN: 152                                  // 下巴关键点
 };
 
-// 眨眼检测状态管理
-let blinkState = {
+// 眨眼检测状态管理 - 重构版本
+interface BlinkState {
+  isBlinking: boolean;
+  blinkCount: number;
+  lastBlinkTime: number;
+  consecutiveBlinkCount: number;
+  lastEyeOpenness: number;
+  resetTimeout: number;
+  baselineOpenness: number;  // 添加基线开合度
+  samples: number[];        // 添加样本数组用于动态调整
+}
+
+let blinkState: BlinkState = {
   isBlinking: false,
   blinkCount: 0,
   lastBlinkTime: 0,
   consecutiveBlinkCount: 0,
-  lastEyeOpenness: 0
+  lastEyeOpenness: 0,
+  resetTimeout: 0,
+  baselineOpenness: 0,
+  samples: []
 };
 
 /**
@@ -28,13 +42,11 @@ function distance(p1: {x: number, y: number}, p2: {x: number, y: number}): numbe
 }
 
 /**
- * 检测眨眼动作 - 重构版本
- * 使用更简单可靠的检测逻辑
+ * 计算眼睛开合度
  * @param landmarks 面部关键点数组
- * @param requiredBlinkCount 需要的眨眼次数，默认为2
- * @returns 如果检测到足够的眨眼次数返回true，否则false
+ * @returns 标准化的眼睛开合度 (0-1之间)
  */
-export function detectBlink(landmarks: any[], requiredBlinkCount: number = 2): boolean {
+function calculateEyeOpenness(landmarks: any[]): number {
   // 定义眼部关键点索引
   const LEFT_EYE_TOP = 159;    // 左眼上眼皮中心
   const LEFT_EYE_BOTTOM = 145; // 左眼下眼皮中心
@@ -56,60 +68,88 @@ export function detectBlink(landmarks: any[], requiredBlinkCount: number = 2): b
   const normalizedLeft = leftEyeOpenness / eyeWidth;
   const normalizedRight = rightEyeOpenness / eyeWidth;
   
-  // 计算平均开合度
-  const currentEyeOpenness = (normalizedLeft + normalizedRight) / 2;
-  
-  // 重构后的眨眼检测阈值 - 更宽松
-  const blinkThreshold = 0.15; // 眨眼阈值 - 更宽松
-  const openThreshold = 0.22;  // 眼睛睁开的阈值 - 更宽松
-  
+  // 返回平均开合度
+  return (normalizedLeft + normalizedRight) / 2;
+}
+
+/**
+ * 检测眨眼动作 - 重构版本
+ * 使用更简洁可靠的检测逻辑
+ * @param landmarks 面部关键点数组
+ * @param requiredBlinkCount 需要的眨眼次数，默认为2
+ * @returns 如果检测到足够的眨眼次数返回true，否则false
+ */
+export function detectBlink(landmarks: any[], requiredBlinkCount: number = 2): boolean {
   const currentTime = Date.now();
-  const timeSinceLastBlink = currentTime - blinkState.lastBlinkTime;
+  const currentEyeOpenness = calculateEyeOpenness(landmarks);
   
-  // 简化的眨眼检测逻辑
-  if (currentEyeOpenness < blinkThreshold && !blinkState.isBlinking) {
+  // 更新基线开合度（前10个样本的平均值）
+  if (blinkState.samples.length < 10) {
+    blinkState.samples.push(currentEyeOpenness);
+    blinkState.baselineOpenness = blinkState.samples.reduce((a, b) => a + b, 0) / blinkState.samples.length;
+  } else {
+    // 保持最新的10个样本
+    blinkState.samples.shift();
+    blinkState.samples.push(currentEyeOpenness);
+    blinkState.baselineOpenness = blinkState.samples.reduce((a, b) => a + b, 0) / blinkState.samples.length;
+  }
+  
+  // 更智能的阈值计算
+  const baseline = blinkState.baselineOpenness;
+  const BLINK_THRESHOLD = Math.max(0.08, baseline * 0.6);    // 更宽松的眨眼阈值
+  const OPEN_THRESHOLD = Math.max(0.09, baseline * 0.75);     // 更宽松的睁开阈值
+  const RESET_TIMEOUT = 5000;    // 重置超时时间 (5秒)
+  const BLINK_TIMEOUT = 800;     // 眨眼超时时间 (0.8秒) - 缩短时间
+  
+  // 检查是否需要重置连续计数
+  if (currentTime - blinkState.lastBlinkTime > RESET_TIMEOUT) {
+    blinkState.consecutiveBlinkCount = 0;
+  }
+  
+  // 检查眨眼是否超时 - 如果眨眼状态持续太久，强制重置
+  if (blinkState.isBlinking && (currentTime - blinkState.lastBlinkTime) > BLINK_TIMEOUT) {
+    blinkState.isBlinking = false;
+    if (process.env.NODE_ENV === 'development') {
+      console.log('眨眼超时，强制重置状态');
+    }
+  }
+  
+  // 眨眼检测逻辑
+  if (currentEyeOpenness < BLINK_THRESHOLD && !blinkState.isBlinking) {
     // 开始眨眼
     blinkState.isBlinking = true;
     blinkState.lastBlinkTime = currentTime;
     
-    // 调试信息
     if (process.env.NODE_ENV === 'development') {
-      console.log('开始眨眼，当前开合度:', currentEyeOpenness.toFixed(3));
+      console.log('开始眨眼，开合度:', currentEyeOpenness.toFixed(3), '阈值:', BLINK_THRESHOLD.toFixed(3), '基线:', baseline.toFixed(3));
     }
-  } else if (currentEyeOpenness > openThreshold && blinkState.isBlinking) {
+  } else if (currentEyeOpenness > OPEN_THRESHOLD && blinkState.isBlinking) {
     // 眨眼结束
     blinkState.isBlinking = false;
-    blinkState.blinkCount++;
     blinkState.consecutiveBlinkCount++;
     
-    // 调试信息
     if (process.env.NODE_ENV === 'development') {
-      console.log(`眨眼完成，总次数: ${blinkState.blinkCount}, 连续次数: ${blinkState.consecutiveBlinkCount}`);
+      console.log(`眨眼完成，连续次数: ${blinkState.consecutiveBlinkCount}, 开合度: ${currentEyeOpenness.toFixed(3)}`);
     }
     
     // 检查是否达到要求的眨眼次数
     if (blinkState.consecutiveBlinkCount >= requiredBlinkCount) {
-      // 重置状态
-      blinkState.consecutiveBlinkCount = 0;
-      blinkState.blinkCount = 0;
+      resetBlinkState();
       return true;
     }
   }
   
-  // 如果超过5秒没有眨眼，重置连续计数 - 缩短时间
-  if (timeSinceLastBlink > 5000) {
-    blinkState.consecutiveBlinkCount = 0;
-  }
-  
-  // 调试信息 - 减少频率
-  if (process.env.NODE_ENV === 'development' && currentTime % 2000 < 16) { // 约0.5fps
+  // 添加调试信息 - 每2秒输出一次状态
+  if (process.env.NODE_ENV === 'development' && currentTime % 2000 < 16) {
     console.log('眨眼检测状态:', {
       eyeOpenness: currentEyeOpenness.toFixed(3),
+      baseline: baseline.toFixed(3),
       isBlinking: blinkState.isBlinking,
-      blinkCount: blinkState.blinkCount,
       consecutiveBlinkCount: blinkState.consecutiveBlinkCount,
-      timeSinceLastBlink: timeSinceLastBlink,
-      thresholds: { blink: blinkThreshold, open: openThreshold }
+      thresholds: { 
+        blink: BLINK_THRESHOLD.toFixed(3), 
+        open: OPEN_THRESHOLD.toFixed(3) 
+      }
     });
   }
   
@@ -125,7 +165,10 @@ export function resetBlinkState(): void {
     blinkCount: 0,
     lastBlinkTime: 0,
     consecutiveBlinkCount: 0,
-    lastEyeOpenness: 0
+    lastEyeOpenness: 0,
+    resetTimeout: 0,
+    baselineOpenness: 0,
+    samples: []
   };
 }
 
