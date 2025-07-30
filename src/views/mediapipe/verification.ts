@@ -200,6 +200,8 @@ export function detectHeadDown(landmarks: any[]): boolean {
   const nose = landmarks[LANDMARK_INDICES.NOSE_TIP];
   const leftEye = landmarks[33];
   const rightEye = landmarks[263];
+  const chin = landmarks[LANDMARK_INDICES.CHIN]; // 下巴关键点
+  const forehead = landmarks[LANDMARK_INDICES.FOREHEAD]; // 额头关键点
   
   // 计算双眼中心点
   const eyeCenter = {
@@ -214,11 +216,26 @@ export function detectHeadDown(landmarks: any[]): boolean {
   const eyeDistance = distance(leftEye, rightEye);
   
   // 计算垂直偏移比例
-  const ratio = verticalDistance / eyeDistance;
+  const noseRatio = verticalDistance / eyeDistance;
+  
+  // 添加下巴位置检测作为辅助条件
+  // 当低头时，下巴也会向下移动
+  const chinToEyeDistance = chin.y - eyeCenter.y;
+  const chinRatio = chinToEyeDistance / eyeDistance;
+  
+  // 添加额头位置检测作为辅助条件
+  // 当低头时，额头会向上移动（Y值减小）
+  const foreheadToEyeDistance = forehead.y - eyeCenter.y;
+  const foreheadRatio = foreheadToEyeDistance / eyeDistance;
   
   // 当头部低下时：
-  // - 鼻尖Y坐标增大（向下移动）
-  // - verticalDistance值增大
-  // - ratio值增大
-  return ratio > 0.65;
+  // - 鼻尖Y坐标增大（向下移动），noseRatio值增大
+  // - 下巴也会向下移动，chinRatio值增大
+  // - 额头会向上移动，foreheadRatio值减小（可能为负值）
+  // 调整阈值以适应真机环境，增加容错性
+  const noseCondition = noseRatio > 0.35; // 鼻尖向下偏移
+  const chinCondition = chinRatio > 0.7;  // 下巴向下偏移
+  const foreheadCondition = foreheadRatio < 0.1; // 额头向上偏移或偏移不大
+  
+  return noseCondition && chinCondition && foreheadCondition;
 }
