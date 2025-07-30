@@ -6,16 +6,11 @@
 
 ### tensorflow-face.ts
 完整版本的工具文件，包含：
-- 降级策略（tfjs -> mediapipe）
+- 降级策略（mediapipe -> tfjs）
 - 详细的错误处理
 - 设备信息记录
 - 配置管理
-
-### tensorflow-face-simple.ts
-简化版本的工具文件，专门针对生产环境优化：
-- 只使用 TensorFlow.js 运行时
-- 简化的错误处理
-- 更小的包体积
+- 自动回退机制
 
 ## 使用方法
 
@@ -26,7 +21,7 @@ import {
   createFaceDetector, 
   startVideoStream, 
   createDetectionLoop 
-} from '@/utils/tensorflow-face-simple';
+} from '@/utils/tensorflow-face';
 
 // 在 Vue 组件中使用
 const loading = ref(true);
@@ -70,9 +65,9 @@ onMounted(async () => {
 
 ### 性能优化
 
-1. **使用简化版本**: 如果不需要降级策略，使用 `tensorflow-face-simple.ts`
-2. **适当的视频尺寸**: 建议使用 640x480 或更小的尺寸
-3. **及时清理**: 确保在组件卸载时停止检测循环和视频流
+1. **适当的视频尺寸**: 建议使用 640x480 或更小的尺寸
+2. **及时清理**: 确保在组件卸载时停止检测循环和视频流
+3. **自动回退**: 工具会自动尝试不同的运行时，确保兼容性
 
 ### 注意事项
 

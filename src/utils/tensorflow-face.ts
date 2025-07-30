@@ -147,7 +147,8 @@ export async function startVideoStream(
 // Function to draw detection results on canvas
 export function drawFaceResults(
   canvas: HTMLCanvasElement,
-  faces: faceLandmarksDetection.Face[]
+  faces: faceLandmarksDetection.Face[],
+  video?: HTMLVideoElement
 ): void {
   if (!canvas) {
     console.error('[drawFaceResults] canvas is null');
@@ -160,18 +161,46 @@ export function drawFaceResults(
     return;
   }
   
+  // 确保 canvas 尺寸与视频匹配
+  if (video) {
+    const videoWidth = video.videoWidth || video.clientWidth;
+    const videoHeight = video.videoHeight || video.clientHeight;
+    
+    if (canvas.width !== videoWidth || canvas.height !== videoHeight) {
+      console.log(`[drawFaceResults] 调整 canvas 尺寸: ${canvas.width}x${canvas.height} -> ${videoWidth}x${videoHeight}`);
+      canvas.width = videoWidth;
+      canvas.height = videoHeight;
+    }
+  }
+  
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  
+  if (faces.length === 0) {
+    return;
+  }
+  
   ctx.strokeStyle = '#00FF00';
   ctx.lineWidth = 2;
+  ctx.fillStyle = '#0FF';
   
   faces.forEach(face => {
     face.keypoints.forEach((kp: faceLandmarksDetection.Keypoint) => {
       ctx.beginPath();
-      ctx.arc(kp.x, kp.y, 1.5, 0, 2 * Math.PI);
-      ctx.fillStyle = '#0FF';
+      // 应用镜像变换：x 坐标翻转
+      const mirroredX = canvas.width - kp.x;
+      ctx.arc(mirroredX, kp.y, 2, 0, 2 * Math.PI);
       ctx.fill();
     });
   });
+  
+  // 调试信息
+  if (faces.length > 0) {
+    console.log(`[drawFaceResults] 绘制了 ${faces[0].keypoints.length} 个关键点（已应用镜像变换）`);
+    console.log(`[drawFaceResults] Canvas 尺寸: ${canvas.width}x${canvas.height}`);
+    if (video) {
+      console.log(`[drawFaceResults] Video 尺寸: ${video.videoWidth}x${video.videoHeight}`);
+    }
+  }
 }
 
 // Function to detect faces in a video element
@@ -201,7 +230,8 @@ export function createDetectionLoop(
   video: HTMLVideoElement,
   detector: faceLandmarksDetection.FaceLandmarksDetector,
   canvas: HTMLCanvasElement,
-  onError?: (error: Error) => void
+  onError?: (error: Error) => void,
+  onFacesDetected?: (faces: faceLandmarksDetection.Face[]) => void
 ): () => void {
   let detecting = false;
   let rafId: number | null = null;
@@ -216,7 +246,12 @@ export function createDetectionLoop(
     
     try {
       const faces = await detectFaces(video, detector);
-      drawFaceResults(canvas, faces);
+      drawFaceResults(canvas, faces, video);
+      
+      // 调用人脸检测回调
+      if (onFacesDetected && faces.length > 0) {
+        onFacesDetected(faces);
+      }
     } catch (e) {
       console.error('[detectionLoop] error:', e);
       onError?.(e as Error);
