@@ -9,12 +9,15 @@
           <div class="progress">步骤 {{ verificationState.currentStep + 1 }}/{{ verificationState.steps.length }}</div>
         </div>
       </div>
-      
+
       <!-- 视频显示区域 - 由外部提供 -->
       <div class="video-wrapper">
         <slot name="video-display">
-          <!-- 默认插槽，外部可以传入视频和画布 -->
-          <div class="placeholder">请提供视频显示组件</div>
+          <!-- 默认的视频显示组件 -->
+          <div class="default-video-container">
+            <video ref="videoRef" autoplay playsinline style="transform: scaleX(-1)"></video>
+            <canvas ref="canvasRef" class="output-canvas"></canvas>
+          </div>
         </slot>
       </div>
     </div>
@@ -43,6 +46,10 @@ import * as verification from './verification'
 defineOptions({
   name: 'FaceVerification'
 })
+
+// DOM refs
+const videoRef = ref<HTMLVideoElement | null>(null)
+const canvasRef = ref<HTMLCanvasElement | null>(null)
 
 // Props
 interface Props {
@@ -109,7 +116,7 @@ function startVerification() {
   verificationState.value.steps = shuffledActions.slice(0, stepCount);
 
   console.log('验证序列:', verificationState.value.steps.map(actionToChinese));
-  
+
   // 触发验证开始事件
   emit('verificationStarted', verificationState.value.steps);
 }
@@ -131,12 +138,12 @@ function confirmAction() {
       // 移动到下一步
       verificationState.value.currentStep++;
       verificationState.value.actionConfirmed = false;
-      
+
       // 如果下一个动作是眨眼，重置眨眼状态
       if (verificationState.value.steps[verificationState.value.currentStep] === 'blink') {
         verification.resetBlinkState();
       }
-      
+
       console.log(`开始验证下一个动作: ${actionToChinese(verificationState.value.steps[verificationState.value.currentStep])}`);
     } else {
       // 完成所有步骤
@@ -190,9 +197,9 @@ const currentActionName = computed(() => {
 function detectActions(landmarks: any) {
   // 只在验证模式下且当前动作未被确认时进行检测
   if (!verificationState.value.isVerifying ||
-      verificationState.value.completed ||
-      verificationState.value.actionConfirmed ||
-      !currentAction.value) {
+    verificationState.value.completed ||
+    verificationState.value.actionConfirmed ||
+    !currentAction.value) {
     return;
   }
 
@@ -238,7 +245,7 @@ function resetVerification() {
     showSuccess: false,
     actionConfirmed: false
   };
-  
+
   // 重置眨眼检测状态
   verification.resetBlinkState();
 }
@@ -256,98 +263,141 @@ defineExpose({
   resetVerification,
   detectActions,
   verificationState: readonly(verificationState),
-  currentAction: readonly(currentAction)
+  currentAction: readonly(currentAction),
+  videoRef,
+  canvasRef
 })
 </script>
 
 <style lang="scss" scoped>
 .face-verification {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 20px;
   box-sizing: border-box;
-}
 
-.video-wrapper {
-  position: relative;
-  display: inline-block;
-  margin: 0 auto;
-  
-  .placeholder {
+
+  .video-wrapper {
+    position: relative;
+    display: inline-block;
+    margin: 0 auto;
     width: 320px;
-    height: 240px;
-    background: #f0f0f0;
+    height: 320px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #007f8b;
+    box-shadow: 0 0 20px rgba(0, 127, 139, 0.3);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      box-shadow: 0 0 30px rgba(0, 127, 139, 0.5);
+      transform: scale(1.02);
+    }
+    
+    // 人脸轮廓
+    &::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px;
+      height: 240px;
+      border: 2px dashed rgba(255, 255, 255, 0.6);
+      border-radius: 48% 48% 50% 50% / 42% 42% 54% 54%;
+      pointer-events: none;
+      z-index: 10;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .default-video-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      
+      video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 50%;
+      }
+      
+      .output-canvas {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        border-radius: 50%;
+      }
+    }
+  }
+
+  .verification-controls {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+
+    .verify-button {
+      width: 200px;
+      padding: 12px 25px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 30px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
+      &:hover {
+        background: #45a049;
+        transform: translateY(-2px);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
+
+  .success-message {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #666;
-    border: 2px dashed #ccc;
-    border-radius: 8px;
-  }
-}
+    z-index: 100;
 
-.verification-controls {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
+    .success-content {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 15px;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      animation: fadeInScale 0.5s forwards;
 
-  .verify-button {
-    width: 200px;
-    padding: 12px 25px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 30px;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background 0.3s, transform 0.2s;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      h2 {
+        color: #4CAF50;
+        font-size: 32px;
+        margin-bottom: 20px;
+        font-weight: bold;
+      }
 
-    &:hover {
-      background: #45a049;
-      transform: translateY(-2px);
-    }
-
-    &:active {
-      transform: translateY(0);
-    }
-  }
-}
-
-.success-message {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 100;
-
-  .success-content {
-    background: white;
-    padding: 30px 40px;
-    border-radius: 15px;
-    text-align: center;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    animation: fadeInScale 0.5s forwards;
-
-    h2 {
-      color: #4CAF50;
-      font-size: 32px;
-      margin-bottom: 20px;
-      font-weight: bold;
-    }
-
-    p {
-      font-size: 20px;
-      color: #555;
+      p {
+        font-size: 20px;
+        color: #555;
+      }
     }
   }
 }
@@ -357,6 +407,7 @@ defineExpose({
     opacity: 0;
     transform: scale(0.8);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -423,8 +474,27 @@ defineExpose({
 }
 
 @keyframes fadeOut {
-  0% { opacity: 1; }
-  70% { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 1;
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
-</style> 
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+}
+</style>

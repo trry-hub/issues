@@ -21,16 +21,7 @@
         <!-- 验证组件 -->
         <FaceVerification ref="verificationRef" :actions="selectedModel.actions" :enable-drawing="true"
                           @verification-complete="onVerificationComplete" @action-detected="onActionDetected"
-                          @verification-started="onVerificationStarted">
-          <!-- 视频显示插槽 -->
-          <template #video-display>
-            <div class="video-wrapper">
-              <video ref="video" autoplay playsinline style="transform: scaleX(-1)"></video>
-              <canvas ref="canvas" class="output-canvas"></canvas>
-            </div>
-          </template>
-        </FaceVerification>
-
+                          @verification-started="onVerificationStarted" />
         <!-- 控制面板 -->
         <div class="control-panel">
           <button @click="resetVerification" class="reset-button">
@@ -53,6 +44,16 @@ const verificationRef = ref()
 const video = ref<HTMLVideoElement | null>(null)
 const canvas = ref<HTMLCanvasElement | null>(null)
 
+// 获取 FaceVerification 组件暴露的 refs
+const getVideoAndCanvas = () => {
+  if (verificationRef.value) {
+    video.value = verificationRef.value.videoRef
+    canvas.value = verificationRef.value.canvasRef
+    console.log('获取到 video ref:', video.value)
+    console.log('获取到 canvas ref:', canvas.value)
+  }
+}
+
 // MediaPipe 相关
 let faceLandmarker: FaceLandmarker | null = null
 let stream: MediaStream | null = null
@@ -70,7 +71,7 @@ const loadError = ref<string | null>(null)
 const selectedModel = ref({
   name: '标准模型',
   actions: [
-    'blink', 
+    'blink',
     'mouthOpen', 'headLeft', 'headRight', 'headUp', 'headDown'
   ],
   videoWidth: 320 // 更新为圆形尺寸
@@ -118,6 +119,10 @@ async function enableCam() {
 
   try {
     stream = await navigator.mediaDevices.getUserMedia(constraints)
+
+    // 获取 FaceVerification 组件的 video 和 canvas refs
+    getVideoAndCanvas()
+
     if (video.value) {
       video.value.srcObject = stream
       video.value.addEventListener("loadedmetadata", () => {
@@ -319,67 +324,9 @@ h2 {
   background: #005a63;
 }
 
-.video-wrapper {
-  position: relative;
-  display: inline-block;
-  margin: 0 auto;
-  width: 320px;
-  height: 320px;
-  border-radius: 50%;
-  overflow: hidden;
-  border: 3px solid #007f8b;
-  box-shadow: 0 0 20px rgba(0, 127, 139, 0.3);
-  transition: all 0.3s ease;
-  
-  &:hover {
-    box-shadow: 0 0 30px rgba(0, 127, 139, 0.5);
-    transform: scale(1.02);
-  }
-  
-  // 人脸轮廓
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 200px;
-    height: 240px;
-    border: 2px dashed rgba(255, 255, 255, 0.6);
-    border-radius: 48% 48% 50% 50% / 42% 42% 54% 54%;
-    pointer-events: none;
-    z-index: 10;
-    animation: pulse 2s ease-in-out infinite;
-  }
-  
-  video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-  }
-  
-  .output-canvas {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    border-radius: 50%;
-  }
-}
 
-@keyframes pulse {
-  0%, 100% {
-    opacity: 0.6;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    opacity: 0.8;
-    transform: translate(-50%, -50%) scale(1.05);
-  }
-}
+
+
 
 .control-panel {
   margin-top: 20px;
