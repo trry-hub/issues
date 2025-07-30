@@ -1,5 +1,6 @@
 import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
 import '@tensorflow/tfjs-backend-webgl';
+import * as tf from '@tensorflow/tfjs';
 import type { Ref } from 'vue';
 
 // Configuration constants
@@ -50,18 +51,50 @@ export function logDeviceInfo(): void {
 export async function createFaceDetectorWithFallback(
   options: any = FACE_DETECTION_CONFIG.BASE_OPTIONS
 ): Promise<faceLandmarksDetection.FaceLandmarksDetector> {
-  try {
-    console.log('尝试加载 TensorFlow.js 人脸检测模型...');
-    const detector = await faceLandmarksDetection.createDetector(
-      faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
-      options
-    );
-    console.log('人脸检测模型加载成功');
-    return detector;
-  } catch (error) {
-    console.error('人脸检测模型加载失败:', error);
-    throw error;
+  const fallbackOptions = [
+    // 首选：mediapipe runtime
+    { runtime: 'mediapipe', maxFaces: 1, refineLandmarks: false, solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619' },
+    // 备选：tfjs runtime (如果可用)
+    { runtime: 'tfjs', maxFaces: 1, refineLandmarks: false },
+  ];
+  
+  for (let i = 0; i < fallbackOptions.length; i++) {
+    try {
+      const currentOptions = i === 0 ? options : fallbackOptions[i];
+      console.log(`尝试加载人脸检测模型 (${currentOptions.runtime})...`);
+      
+      // 确保 TensorFlow.js 后端已初始化
+      if (currentOptions.runtime === 'tfjs') {
+        try {
+          await tf.setBackend('webgl');
+          console.log('TensorFlow.js WebGL 后端已初始化');
+        } catch (backendError) {
+          console.warn('TensorFlow.js 后端初始化失败:', backendError);
+        }
+      }
+      
+      const detector = await faceLandmarksDetection.createDetector(
+        faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
+        currentOptions
+      );
+      
+      console.log(`人脸检测模型加载成功 (${currentOptions.runtime})`);
+      return detector;
+    } catch (error) {
+      console.warn(`${fallbackOptions[i].runtime} 加载失败:`, error);
+      
+      // 如果是最后一个选项，抛出错误
+      if (i === fallbackOptions.length - 1) {
+        console.error('所有运行时都加载失败');
+        throw error;
+      }
+      
+      // 否则继续尝试下一个选项
+      continue;
+    }
   }
+  
+  throw new Error('无法加载人脸检测模型');
 }
 
 // Unified face detector creation function

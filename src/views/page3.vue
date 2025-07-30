@@ -16,7 +16,7 @@ import {
   createFaceDetector, 
   startVideoStream, 
   createDetectionLoop 
-} from '@/utils/tensorflow-face';
+} from '@/utils/tensorflow-face-simple';
 
 const video = useTemplateRef<HTMLVideoElement>('video');
 const canvas = useTemplateRef<HTMLCanvasElement>('canvas');
