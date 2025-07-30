@@ -8,6 +8,15 @@ const LANDMARK_INDICES = {
   CHIN: 152                                  // 下巴关键点
 };
 
+// 眨眼检测状态管理
+let blinkState = {
+  isBlinking: false,
+  blinkCount: 0,
+  lastBlinkTime: 0,
+  consecutiveBlinkCount: 0,
+  lastEyeOpenness: 0
+};
+
 /**
  * 计算两点之间的欧几里得距离
  * @param p1 第一个点 {x, y}
@@ -19,12 +28,13 @@ function distance(p1: {x: number, y: number}, p2: {x: number, y: number}): numbe
 }
 
 /**
- * 检测眨眼动作
- * 原理：通过计算眼睛垂直开合度与眼宽的比值来判断
+ * 检测眨眼动作 - 优化版本
+ * 原理：通过计算眼睛垂直开合度与眼宽的比值来判断，并添加眨眼次数验证
  * @param landmarks 面部关键点数组
- * @returns 如果检测到眨眼返回true，否则false
+ * @param requiredBlinkCount 需要的眨眼次数，默认为2
+ * @returns 如果检测到足够的眨眼次数返回true，否则false
  */
-export function detectBlink(landmarks: any[]): boolean {
+export function detectBlink(landmarks: any[], requiredBlinkCount: number = 2): boolean {
   // 定义眼部关键点索引
   const LEFT_EYE_TOP = 159;    // 左眼上眼皮中心
   const LEFT_EYE_BOTTOM = 145; // 左眼下眼皮中心
@@ -46,8 +56,76 @@ export function detectBlink(landmarks: any[]): boolean {
   const normalizedLeft = leftEyeOpenness / eyeWidth;
   const normalizedRight = rightEyeOpenness / eyeWidth;
   
-  // 开合度低于阈值表示眨眼
-  return (normalizedLeft + normalizedRight) / 2 < 0.1;
+  // 计算平均开合度
+  const currentEyeOpenness = (normalizedLeft + normalizedRight) / 2;
+  
+  // 更严格的眨眼阈值
+  const blinkThreshold = 0.08; // 从0.1降低到0.08
+  const openThreshold = 0.15;  // 眼睛睁开的阈值
+  
+  const currentTime = Date.now();
+  const timeSinceLastBlink = currentTime - blinkState.lastBlinkTime;
+  
+  // 检测眨眼状态变化
+  if (currentEyeOpenness < blinkThreshold && !blinkState.isBlinking) {
+    // 开始眨眼
+    blinkState.isBlinking = true;
+    blinkState.lastBlinkTime = currentTime;
+    
+    // 调试信息
+    if (process.env.NODE_ENV === 'development') {
+      console.log('开始眨眼，当前开合度:', currentEyeOpenness.toFixed(3));
+    }
+  } else if (currentEyeOpenness > openThreshold && blinkState.isBlinking) {
+    // 眨眼结束
+    blinkState.isBlinking = false;
+    blinkState.blinkCount++;
+    blinkState.consecutiveBlinkCount++;
+    
+    // 调试信息
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`眨眼完成，总次数: ${blinkState.blinkCount}, 连续次数: ${blinkState.consecutiveBlinkCount}`);
+    }
+    
+    // 检查是否达到要求的眨眼次数
+    if (blinkState.consecutiveBlinkCount >= requiredBlinkCount) {
+      // 重置状态
+      blinkState.consecutiveBlinkCount = 0;
+      blinkState.blinkCount = 0;
+      return true;
+    }
+  }
+  
+  // 如果超过3秒没有眨眼，重置连续计数
+  if (timeSinceLastBlink > 3000) {
+    blinkState.consecutiveBlinkCount = 0;
+  }
+  
+  // 调试信息
+  if (process.env.NODE_ENV === 'development' && currentTime % 1000 < 16) { // 约60fps
+    console.log('眨眼检测状态:', {
+      eyeOpenness: currentEyeOpenness.toFixed(3),
+      isBlinking: blinkState.isBlinking,
+      blinkCount: blinkState.blinkCount,
+      consecutiveBlinkCount: blinkState.consecutiveBlinkCount,
+      timeSinceLastBlink: timeSinceLastBlink
+    });
+  }
+  
+  return false;
+}
+
+/**
+ * 重置眨眼检测状态
+ */
+export function resetBlinkState(): void {
+  blinkState = {
+    isBlinking: false,
+    blinkCount: 0,
+    lastBlinkTime: 0,
+    consecutiveBlinkCount: 0,
+    lastEyeOpenness: 0
+  };
 }
 
 /**
@@ -234,39 +312,64 @@ export function detectHeadDown(landmarks: any[]): boolean {
   const faceHeight = chin.y - forehead.y;
   const faceHeightRatio = faceHeight / eyeDistance;
   
-  // 真机优化：进一步降低阈值，提高检测灵敏度
+  // 优化后的检测逻辑 - 更严格的阈值
   // 当头部低下时：
   // - 鼻尖Y坐标增大（向下移动），noseRatio值增大
   // - 下巴也会向下移动，chinRatio值增大
   // - 额头会向上移动，foreheadRatio值减小
   
-  // 主要条件：鼻尖向下偏移 - 进一步降低阈值
-  const noseCondition = noseRatio > 0.2; // 从0.25降低到0.2
+  // 主要条件：鼻尖向下偏移 - 提高阈值要求
+  const noseCondition = noseRatio > 0.35; // 从0.2提高到0.35
   
-  // 辅助条件1：下巴向下偏移 - 进一步降低阈值
-  const chinCondition = chinRatio > 0.4; // 从0.5降低到0.4
+  // 辅助条件1：下巴向下偏移 - 提高阈值要求
+  const chinCondition = chinRatio > 0.6; // 从0.4提高到0.6
   
-  // 辅助条件2：额头向上偏移或偏移不大 - 进一步放宽阈值
-  const foreheadCondition = foreheadRatio < 0.25; // 从0.2放宽到0.25
+  // 辅助条件2：额头向上偏移 - 更严格的阈值
+  const foreheadCondition = foreheadRatio < 0.1; // 从0.25降低到0.1
   
-  // 新增条件：面部整体倾斜角度 - 放宽阈值
-  const faceTiltCondition = faceHeightRatio < 2.0; // 从1.8放宽到2.0
+  // 新增条件：面部整体倾斜角度 - 更严格的阈值
+  const faceTiltCondition = faceHeightRatio < 1.6; // 从2.0降低到1.6
   
-  // 新增条件：鼻子到下巴的相对位置 - 降低阈值
-  const noseChinCondition = noseToChinRatio > 0.25; // 从0.3降低到0.25
+  // 新增条件：鼻子到下巴的相对位置 - 提高阈值
+  const noseChinCondition = noseToChinRatio > 0.4; // 从0.25提高到0.4
   
-  // 真机优化：使用更宽松的组合条件
-  // 主要条件满足 + 至少1个辅助条件满足（从2个降低到1个）
+  // 新增条件：确保眼睛中心在面部上半部分
+  const eyePositionCondition = eyeCenter.y < (forehead.y + chin.y) / 2;
+  
+  // 新增条件：确保额头位置合理（不会太低）
+  const foreheadPositionCondition = forehead.y < eyeCenter.y;
+  
+  // 更严格的组合条件
   const mainCondition = noseCondition;
   const auxiliaryConditions = [
     chinCondition,
     foreheadCondition,
     faceTiltCondition,
-    noseChinCondition
+    noseChinCondition,
+    eyePositionCondition,
+    foreheadPositionCondition
   ];
   
   const satisfiedAuxiliary = auxiliaryConditions.filter(Boolean).length;
   
-  // 主要条件满足且至少1个辅助条件满足
-  return mainCondition && satisfiedAuxiliary >= 1;
+  // 调试信息（开发模式下显示）
+  if (process.env.NODE_ENV === 'development') {
+    console.log('低头检测调试信息:', {
+      noseRatio: noseRatio.toFixed(3),
+      chinRatio: chinRatio.toFixed(3),
+      foreheadRatio: foreheadRatio.toFixed(3),
+      faceHeightRatio: faceHeightRatio.toFixed(3),
+      noseToChinRatio: noseToChinRatio.toFixed(3),
+      mainCondition,
+      auxiliaryConditions: auxiliaryConditions.map((condition, index) => ({
+        name: ['chin', 'forehead', 'faceTilt', 'noseChin', 'eyePosition', 'foreheadPosition'][index],
+        satisfied: condition
+      })),
+      satisfiedAuxiliary,
+      result: mainCondition && satisfiedAuxiliary >= 3
+    });
+  }
+  
+  // 主要条件满足且至少3个辅助条件满足（从1个提高到3个）
+  return mainCondition && satisfiedAuxiliary >= 3;
 }

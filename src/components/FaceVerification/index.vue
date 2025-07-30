@@ -77,7 +77,7 @@ const verificationState = ref({
 // 动作名称中英文转换
 function actionToChinese(action: string): string {
   const map: Record<string, string> = {
-    blink: '眨眼',
+    blink: '眨眼2次',
     mouthOpen: '张嘴',
     headLeft: '向左转头',
     headRight: '向右转头',
@@ -98,6 +98,9 @@ function startVerification() {
     showSuccess: false,
     actionConfirmed: false
   }
+
+  // 重置眨眼检测状态
+  verification.resetBlinkState();
 
   // 生成随机动作序列 (3-5个动作)
   const stepCount = 3 + Math.floor(Math.random() * 3);
@@ -127,6 +130,12 @@ function confirmAction() {
       // 移动到下一步
       verificationState.value.currentStep++;
       verificationState.value.actionConfirmed = false;
+      
+      // 如果下一个动作是眨眼，重置眨眼状态
+      if (verificationState.value.steps[verificationState.value.currentStep] === 'blink') {
+        verification.resetBlinkState();
+      }
+      
       console.log(`开始验证下一个动作: ${actionToChinese(verificationState.value.steps[verificationState.value.currentStep])}`);
     } else {
       // 完成所有步骤
@@ -191,7 +200,7 @@ function detectActions(landmarks: any) {
 
   switch (currentActionType) {
     case 'blink':
-      detected = verification.detectBlink(landmarks);
+      detected = verification.detectBlink(landmarks, 2); // 需要眨眼2次
       break;
     case 'mouthOpen':
       detected = verification.detectMouthOpen(landmarks);
@@ -228,6 +237,9 @@ function resetVerification() {
     showSuccess: false,
     actionConfirmed: false
   };
+  
+  // 重置眨眼检测状态
+  verification.resetBlinkState();
 }
 
 // 监听自动开始
