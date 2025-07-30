@@ -123,7 +123,7 @@ let drawingUtils: any = null
 let lastVideoTime = -1
 let results: any = undefined
 
-const videoWidth = ref(300)
+const videoWidth = ref(280)
 
 // Initialize face landmarker
 async function createFaceLandmarker() {
@@ -276,7 +276,10 @@ async function enableCam() {
     video: {
       facingMode: 'user', // 优先使用前置摄像头
       // 移除固定分辨率设置，让浏览器使用默认分辨率
-    }
+      width: { ideal: videoWidth.value },
+      height: { ideal: videoWidth.value },
+    },
+    audio: false
   }
 
   try {
