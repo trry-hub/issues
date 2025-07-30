@@ -5,7 +5,6 @@
     <div class="demo-section">
       <h2>实时人脸关键点检测</h2>
       <p>将您的脸部对准摄像头，即可获得实时人脸关键点检测。</p>
-      <p v-if="isMobile" class="mobile-tip">📱 移动端提示：请确保摄像头权限已开启，并保持设备稳定</p>
       
       <div class="video-container">
         <div v-if="isLoading" class="loading-state">
@@ -29,7 +28,6 @@
               <ul>
                 <li>用户代理: {{ deviceInfo.userAgent }}</li>
                 <li>平台: {{ deviceInfo.platform }}</li>
-                <li>移动设备: {{ deviceInfo.isMobile ? '是' : '否' }}</li>
                 <li>网络类型: {{ deviceInfo.networkType }}</li>
               </ul>
             </div>
@@ -105,7 +103,6 @@ const videoElement = ref<HTMLVideoElement>()
 const canvasElement = ref<HTMLCanvasElement>()
 const webcamRunning = ref(false)
 const blendShapes = ref<any[]>([])
-const isMobile = ref(false)
 const isLoading = ref(true)
 const loadError = ref<string | null>(null)
 const isMirrored = ref(true) // 默认开启镜像
@@ -114,7 +111,6 @@ const isMirrored = ref(true) // 默认开启镜像
 const deviceInfo = computed(() => ({
   userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : '',
   platform: typeof window !== 'undefined' ? window.navigator.platform : '',
-  isMobile: isMobile.value,
   networkType: typeof window !== 'undefined' ? (window.navigator as any).connection?.effectiveType || '未知' : '未知'
 }))
 
@@ -130,7 +126,7 @@ const videoWidth = ref(280)
 async function retryLoading() {
   console.log('重试加载 Face Landmarker...')
   try {
-    faceLandmarker = await createFaceLandmarker(isLoading, loadError, isMobile.value)
+    faceLandmarker = await createFaceLandmarker(isLoading, loadError)
   } catch (error) {
     // Error is already handled in createFaceLandmarker
   }
@@ -320,11 +316,6 @@ async function predictWebcam() {
   }
 }
 
-// 检测移动设备
-const detectMobile = () => {
-  isMobile.value = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768
-}
-
 // 检测网络状态
 const checkNetworkStatus = () => {
   const connection = (navigator as any).connection
@@ -432,10 +423,9 @@ const getBlendShapeDisplayName = (categoryName: string): string => {
 
 // Lifecycle
 onMounted(async () => {
-  detectMobile()
   checkNetworkStatus()
   try {
-    faceLandmarker = await createFaceLandmarker(isLoading, loadError, isMobile.value)
+    faceLandmarker = await createFaceLandmarker(isLoading, loadError)
   } catch (error) {
     // Error is already handled in createFaceLandmarker
   }
@@ -689,13 +679,4 @@ h2 {
   justify-content: center;
 }
 
-.mobile-tip {
-  background: #e3f2fd;
-  color: #1976d2;
-  padding: 10px;
-  border-radius: 4px;
-  margin-bottom: 15px;
-  font-size: 14px;
-  text-align: center;
-}
 </style>

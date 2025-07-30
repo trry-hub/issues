@@ -200,7 +200,7 @@ function detectActions(landmarks: any) {
 
   switch (currentActionType) {
     case 'blink':
-      detected = verification.detectBlink(landmarks, 2); // 需要眨眼2次
+      detected = verification.detectBlink(landmarks, 2);
       break;
     case 'mouthOpen':
       detected = verification.detectMouthOpen(landmarks);

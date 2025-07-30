@@ -59,9 +59,9 @@ export function detectBlink(landmarks: any[], requiredBlinkCount: number = 2): b
   // 计算平均开合度
   const currentEyeOpenness = (normalizedLeft + normalizedRight) / 2;
   
-  // 更严格的眨眼阈值
-  const blinkThreshold = 0.08; // 从0.1降低到0.08
-  const openThreshold = 0.15;  // 眼睛睁开的阈值
+  // 优化的眨眼检测阈值
+  const blinkThreshold = 0.20; // 眨眼阈值
+  const openThreshold = 0.28;  // 眼睛睁开的阈值
   
   const currentTime = Date.now();
   const timeSinceLastBlink = currentTime - blinkState.lastBlinkTime;
@@ -96,19 +96,20 @@ export function detectBlink(landmarks: any[], requiredBlinkCount: number = 2): b
     }
   }
   
-  // 如果超过3秒没有眨眼，重置连续计数
-  if (timeSinceLastBlink > 3000) {
+  // 如果超过8秒没有眨眼，重置连续计数
+  if (timeSinceLastBlink > 8000) {
     blinkState.consecutiveBlinkCount = 0;
   }
   
   // 调试信息
-  if (process.env.NODE_ENV === 'development' && currentTime % 1000 < 16) { // 约60fps
+  if (process.env.NODE_ENV === 'development' && currentTime % 1000 < 16) { // 约1fps
     console.log('眨眼检测状态:', {
       eyeOpenness: currentEyeOpenness.toFixed(3),
       isBlinking: blinkState.isBlinking,
       blinkCount: blinkState.blinkCount,
       consecutiveBlinkCount: blinkState.consecutiveBlinkCount,
-      timeSinceLastBlink: timeSinceLastBlink
+      timeSinceLastBlink: timeSinceLastBlink,
+      thresholds: { blink: blinkThreshold, open: openThreshold }
     });
   }
   

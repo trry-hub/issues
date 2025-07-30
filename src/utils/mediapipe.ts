@@ -42,11 +42,10 @@ export function handleError(error: unknown, context: string): void {
 }
 
 // Utility function to log device information
-export function logDeviceInfo(isMobile: boolean): void {
+export function logDeviceInfo(): void {
   console.log('设备信息:', {
     userAgent: navigator.userAgent,
     platform: navigator.platform,
-    isMobile,
     connection: (navigator as any).connection?.effectiveType || '未知'
   })
 }
@@ -84,7 +83,6 @@ export async function createFaceLandmarkerWithFallback(
 export async function createFaceLandmarker(
   isLoading: Ref<boolean>,
   loadError: Ref<string | null>,
-  isMobile: boolean,
   useLocalModel: boolean = false
 ): Promise<any> {
   isLoading.value = true
@@ -92,7 +90,7 @@ export async function createFaceLandmarker(
   
   try {
     console.log('开始加载 Face Landmarker...')
-    logDeviceInfo(isMobile)
+    logDeviceInfo()
     
     const filesetResolver = await FilesetResolver.forVisionTasks(FACE_LANDMARKER_CONFIG.WASM_PATH)
     console.log('FilesetResolver 创建成功，开始创建 FaceLandmarker...')
@@ -104,11 +102,6 @@ export async function createFaceLandmarker(
     handleError(error, '加载人脸关键点检测器时出错')
     loadError.value = `加载失败: ${error instanceof Error ? error.message : String(error)}`
     isLoading.value = false
-    
-    // 在移动设备上，可能是网络问题，提供重试选项
-    if (isMobile) {
-      console.log('移动设备加载失败，可能是网络问题')
-    }
     
     throw error
   }

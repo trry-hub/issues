@@ -65,7 +65,6 @@ let results: any = undefined
 // 状态
 const isLoading = ref(true)
 const loadError = ref<string | null>(null)
-const isMobile = ref(false)
 
 // 标准模型配置
 const selectedModel = ref({
@@ -74,37 +73,10 @@ const selectedModel = ref({
   videoWidth: 320 // 更新为圆形尺寸
 })
 
-// 从验证组件获取状态
-const verificationState = computed(() => verificationRef.value?.verificationState || {
-  isVerifying: false,
-  currentStep: -1,
-  steps: [],
-  completed: false,
-  showSuccess: false,
-  actionConfirmed: false
-})
-
-const currentAction = computed(() => verificationRef.value?.currentAction || null)
-const isDetecting = computed(() => verificationRef.value?.isDetecting || false)
-
-// 当前动作的中文名称
-const currentActionName = computed(() => {
-  if (!currentAction.value) return '无'
-  const map: Record<string, string> = {
-    blink: '眨眼',
-    mouthOpen: '张嘴',
-    headLeft: '向左转头',
-    headRight: '向右转头',
-    headUp: '抬头',
-    headDown: '低头'
-  }
-  return map[currentAction.value] || currentAction.value
-})
-
 // 初始化人脸检测器
 async function createFaceLandmarkerWithFallback() {
   try {
-    faceLandmarker = await createFaceLandmarker(isLoading, loadError, isMobile.value, true) // 使用本地模型
+    faceLandmarker = await createFaceLandmarker(isLoading, loadError, true) // 使用本地模型
     console.log('人脸关键点检测器加载成功')
 
     // 自动启动摄像头
@@ -118,7 +90,7 @@ async function createFaceLandmarkerWithFallback() {
 async function retryLoading() {
   console.log('重试加载 Face Landmarker...')
   try {
-    faceLandmarker = await createFaceLandmarker(isLoading, loadError, isMobile.value, true)
+    faceLandmarker = await createFaceLandmarker(isLoading, loadError, true)
     console.log('人脸关键点检测器加载成功')
 
     // 自动启动摄像头
@@ -126,11 +98,6 @@ async function retryLoading() {
   } catch (error) {
     // Error is already handled in createFaceLandmarker
   }
-}
-
-// 检测移动设备
-const detectMobile = () => {
-  isMobile.value = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768
 }
 
 // 启用摄像头
@@ -234,7 +201,6 @@ async function predictWebcam() {
 
 // 初始化
 onMounted(async () => {
-  detectMobile()
   await createFaceLandmarkerWithFallback()
 })
 
