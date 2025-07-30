@@ -33,14 +33,6 @@
         <p>您已完成所有动作验证</p>
       </div>
     </div>
-
-    <!-- 性能监控显示 (开发模式) -->
-    <div v-if="isDevelopment" class="performance-monitor">
-      <div class="performance-content">
-        <span>检测状态: {{ isDetecting ? '检测中' : '等待中' }}</span>
-        <span>当前动作: {{ currentActionName || '无' }}</span>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -72,9 +64,6 @@ const emit = defineEmits<{
   verificationStarted: [steps: string[]]
 }>()
 
-// 开发模式检测
-const isDevelopment = import.meta.env.DEV
-
 // 验证流程状态
 const verificationState = ref({
   isVerifying: false,
@@ -84,9 +73,6 @@ const verificationState = ref({
   showSuccess: false,
   actionConfirmed: false
 })
-
-// 检测状态
-const isDetecting = ref(false)
 
 // 动作名称中英文转换
 function actionToChinese(action: string): string {
@@ -135,12 +121,13 @@ function confirmAction() {
   // 显示动作完成提示
   showActionCompleted();
 
-  // 延迟后进入下一步
+  // 延迟 1.5 秒后进入下一步
   setTimeout(() => {
     if (verificationState.value.currentStep < verificationState.value.steps.length - 1) {
       // 移动到下一步
       verificationState.value.currentStep++;
       verificationState.value.actionConfirmed = false;
+      console.log(`开始验证下一个动作: ${actionToChinese(verificationState.value.steps[verificationState.value.currentStep])}`);
     } else {
       // 完成所有步骤
       verificationState.value.completed = true;
@@ -155,7 +142,7 @@ function confirmAction() {
         verificationState.value.isVerifying = false;
       }, 3000);
     }
-  }, 1000);
+  }, 1500); // 改为 1.5 秒
 }
 
 // 添加动作完成提示方法
@@ -167,11 +154,11 @@ function showActionCompleted() {
     <div>动作完成!</div>
   `;
 
-  document.body.appendChild(prompt);
+  document.getElementsByClassName('prompt-content')[0]?.appendChild(prompt);
 
   setTimeout(() => {
     prompt.remove();
-  }, 1500);
+  }, 1500); // 改为 1.5 秒，与等待时间保持一致
 }
 
 // 当前需要执行的动作
@@ -241,12 +228,6 @@ function resetVerification() {
     showSuccess: false,
     actionConfirmed: false
   };
-  isDetecting.value = false;
-}
-
-// 设置检测状态
-function setDetectingStatus(status: boolean) {
-  isDetecting.value = status;
 }
 
 // 监听自动开始
@@ -261,10 +242,8 @@ defineExpose({
   startVerification,
   resetVerification,
   detectActions,
-  setDetectingStatus,
   verificationState: readonly(verificationState),
-  currentAction: readonly(currentAction),
-  isDetecting: readonly(isDetecting)
+  currentAction: readonly(currentAction)
 })
 </script>
 
@@ -432,29 +411,7 @@ defineExpose({
 
 @keyframes fadeOut {
   0% { opacity: 1; }
-  80% { opacity: 1; }
+  70% { opacity: 1; }
   100% { opacity: 0; }
-}
-
-.performance-monitor {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 12px;
-  z-index: 1000;
-}
-
-.performance-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.performance-content span {
-  font-family: monospace;
 }
 </style> 

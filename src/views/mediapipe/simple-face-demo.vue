@@ -97,7 +97,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { FaceLandmarker, FilesetResolver, DrawingUtils } from '@mediapipe/tasks-vision'
+import { FaceLandmarker, DrawingUtils } from '@mediapipe/tasks-vision'
+import { createFaceLandmarker } from '@/utils/mediapipe'
 
 // Refs
 const videoElement = ref<HTMLVideoElement>()
@@ -125,115 +126,13 @@ let results: any = undefined
 
 const videoWidth = ref(280)
 
-// Initialize face landmarker
-async function createFaceLandmarker() {
-  isLoading.value = true
-  loadError.value = null
-  
-  try {
-    console.log('开始加载 Face Landmarker...')
-    console.log('设备信息:', {
-      userAgent: navigator.userAgent,
-      platform: navigator.platform,
-      isMobile: isMobile.value,
-      connection: (navigator as any).connection?.effectiveType || '未知'
-    })
-    
-    const filesetResolver = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
-    )
-    
-    console.log('FilesetResolver 创建成功，开始创建 FaceLandmarker...')
-    
-    faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
-      baseOptions: {
-        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
-      },
-      outputFaceBlendshapes: true,
-      runningMode: "VIDEO",
-      numFaces: 1
-    })
-    
-    console.log('人脸关键点检测器加载成功 (GPU)')
-    isLoading.value = false
-  } catch (error) {
-    console.error('加载人脸关键点检测器时出错:', error)
-    console.error('错误详情:', {
-      name: error instanceof Error ? error.name : '未知',
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    })
-    loadError.value = `加载失败: ${error instanceof Error ? error.message : String(error)}`
-    isLoading.value = false
-    
-    // 在移动设备上，可能是网络问题，提供重试选项
-    if (isMobile.value) {
-      console.log('移动设备加载失败，可能是网络问题')
-    }
-  }
-}
-
 // Retry loading
 async function retryLoading() {
   console.log('重试加载 Face Landmarker...')
-  await createFaceLandmarker()
-}
-
-// Try loading with CPU fallback
-async function createFaceLandmarkerWithFallback() {
-  isLoading.value = true
-  loadError.value = null
-  
   try {
-    console.log('开始加载 Face Landmarker (GPU)...')
-    
-    const filesetResolver = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
-    )
-    
-    // 首先尝试GPU
-    try {
-      faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
-        baseOptions: {
-          modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
-          delegate: "GPU"
-        },
-        outputFaceBlendshapes: true,
-        runningMode: "VIDEO",
-        numFaces: 1
-      })
-      console.log('Face landmarker loaded successfully with GPU')
-    } catch (gpuError) {
-      console.warn('GPU加载失败，尝试使用CPU:', gpuError)
-      
-      // 如果GPU失败，尝试CPU
-      faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
-        baseOptions: {
-          modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
-          delegate: "CPU"
-        },
-        outputFaceBlendshapes: true,
-        runningMode: "VIDEO",
-        numFaces: 1
-      })
-      console.log('Face landmarker loaded successfully with CPU')
-    }
-    
-    isLoading.value = false
+    faceLandmarker = await createFaceLandmarker(isLoading, loadError, isMobile.value)
   } catch (error) {
-    console.error('Error loading face landmarker:', error)
-    console.error('错误详情:', {
-      name: error instanceof Error ? error.name : '未知',
-      message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    })
-    loadError.value = `加载失败: ${error instanceof Error ? error.message : String(error)}`
-    isLoading.value = false
-    
-    // 在移动设备上，可能是网络问题，提供重试选项
-    if (isMobile.value) {
-      console.log('移动设备加载失败，可能是网络问题')
-    }
+    // Error is already handled in createFaceLandmarker
   }
 }
 
@@ -535,7 +434,11 @@ const getBlendShapeDisplayName = (categoryName: string): string => {
 onMounted(async () => {
   detectMobile()
   checkNetworkStatus()
-  await createFaceLandmarkerWithFallback()
+  try {
+    faceLandmarker = await createFaceLandmarker(isLoading, loadError, isMobile.value)
+  } catch (error) {
+    // Error is already handled in createFaceLandmarker
+  }
 })
 
 onUnmounted(() => {

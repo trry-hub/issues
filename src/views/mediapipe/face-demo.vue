@@ -8,7 +8,7 @@
         <p>正在加载人脸检测模型...</p>
         <p class="loading-tip">首次加载可能需要一些时间，请耐心等待</p>
       </div>
-      
+
       <div v-else-if="loadError" class="error-state">
         <p class="error-message">❌ {{ loadError }}</p>
         <button @click="retryLoading" class="retry-button">
@@ -16,7 +16,7 @@
         </button>
         <p class="error-tip">如果问题持续存在，请检查网络连接或刷新页面</p>
       </div>
-      
+
       <div v-else>
         <!-- 验证组件 -->
         <FaceVerification ref="verificationRef" :actions="selectedModel.actions" :enable-drawing="true"
@@ -44,7 +44,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
-import { FaceLandmarker, FilesetResolver, DrawingUtils } from '@mediapipe/tasks-vision'
+import { FaceLandmarker, DrawingUtils } from '@mediapipe/tasks-vision'
+import { createFaceLandmarker } from '@/utils/mediapipe'
 import FaceVerification from '@/components/FaceVerification/index.vue'
 
 // 组件引用
@@ -64,12 +65,13 @@ let results: any = undefined
 // 状态
 const isLoading = ref(true)
 const loadError = ref<string | null>(null)
+const isMobile = ref(false)
 
 // 标准模型配置
 const selectedModel = ref({
   name: '标准模型',
   actions: ['blink', 'mouthOpen', 'headLeft', 'headRight', 'headUp', 'headDown'],
-  videoWidth: 280
+  videoWidth: 320 // 更新为圆形尺寸
 })
 
 // 从验证组件获取状态
@@ -101,61 +103,34 @@ const currentActionName = computed(() => {
 
 // 初始化人脸检测器
 async function createFaceLandmarkerWithFallback() {
-  isLoading.value = true
-  loadError.value = null
-  
   try {
-    console.log('开始加载 Face Landmarker...')
-    
-    const filesetResolver = await FilesetResolver.forVisionTasks(
-      "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm"
-    )
-    
-    // 首先尝试GPU
-    try {
-      faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
-        baseOptions: {
-          modelAssetPath: `/mediapipe/face_landmarker.task`,
-          // modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
-          delegate: "GPU"
-        },
-        outputFaceBlendshapes: true,
-        runningMode: "VIDEO",
-        numFaces: 1
-      })
-      console.log('Face landmarker loaded successfully with GPU')
-    } catch (gpuError) {
-      console.warn('GPU加载失败，尝试使用CPU:', gpuError)
-      
-      // 如果GPU失败，尝试CPU
-      faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
-        baseOptions: {
-          modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
-          delegate: "CPU"
-        },
-        outputFaceBlendshapes: true,
-        runningMode: "VIDEO",
-        numFaces: 1
-      })
-      console.log('Face landmarker loaded successfully with CPU')
-    }
-    
+    faceLandmarker = await createFaceLandmarker(isLoading, loadError, isMobile.value, true) // 使用本地模型
     console.log('人脸关键点检测器加载成功')
-    isLoading.value = false
-    
+
     // 自动启动摄像头
     await enableCam()
   } catch (error) {
-    console.error('加载人脸关键点检测器时出错:', error)
-    loadError.value = `加载失败: ${error instanceof Error ? error.message : String(error)}`
-    isLoading.value = false
+    // Error is already handled in createFaceLandmarker
   }
 }
 
 // 重试加载
 async function retryLoading() {
   console.log('重试加载 Face Landmarker...')
-  await createFaceLandmarkerWithFallback()
+  try {
+    faceLandmarker = await createFaceLandmarker(isLoading, loadError, isMobile.value, true)
+    console.log('人脸关键点检测器加载成功')
+
+    // 自动启动摄像头
+    await enableCam()
+  } catch (error) {
+    // Error is already handled in createFaceLandmarker
+  }
+}
+
+// 检测移动设备
+const detectMobile = () => {
+  isMobile.value = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768
 }
 
 // 启用摄像头
@@ -197,25 +172,24 @@ async function predictWebcam() {
   const videoElement = video.value
   const canvasElement = canvas.value
   const ctx = canvasElement.getContext('2d')
-  
+
   if (!ctx) return
-  
+
   drawingUtils = new DrawingUtils(ctx)
 
   // 确保 canvas 尺寸与视频的实际尺寸完全匹配
   canvasElement.width = videoElement.videoWidth
   canvasElement.height = videoElement.videoHeight
-  
-  // 设置显示尺寸
-  const radio = videoElement.videoHeight / videoElement.videoWidth
-  const currentVideoWidth = selectedModel.value.videoWidth
-  videoElement.style.width = currentVideoWidth + "px"
-  videoElement.style.height = currentVideoWidth * radio + "px"
-  canvasElement.style.width = currentVideoWidth + "px"
-  canvasElement.style.height = currentVideoWidth * radio + "px"
+
+  // 设置显示尺寸 - 适应圆形容器
+  const containerSize = 320 // 圆形容器的尺寸
+  videoElement.style.width = containerSize + "px"
+  videoElement.style.height = containerSize + "px"
+  canvasElement.style.width = containerSize + "px"
+  canvasElement.style.height = containerSize + "px"
 
   let startTimeMs = performance.now()
-  
+
   if (lastVideoTime !== videoElement.currentTime) {
     lastVideoTime = videoElement.currentTime
     results = faceLandmarker.detectForVideo(videoElement, startTimeMs)
@@ -229,7 +203,7 @@ async function predictWebcam() {
     ctx.save()
     ctx.scale(-1, 1)
     ctx.translate(-canvasElement.width, 0)
-    
+
     for (const landmarks of results.faceLandmarks) {
       // 调用验证组件的动作检测
       if (verificationRef.value) {
@@ -242,26 +216,25 @@ async function predictWebcam() {
         FaceLandmarker.FACE_LANDMARKS_FACE_OVAL,
         { color: '#0FF', lineWidth: 1 }
       )
-      
-      // 根据验证状态决定是否绘制更多细节
-      if (!verificationState.value.isVerifying) {
-        drawingUtils.drawConnectors(
-          landmarks,
-          FaceLandmarker.FACE_LANDMARKS_TESSELATION,
-          { color: '#0FF', lineWidth: 0.2 }
-        )
-      }
+
+      // 始终绘制面部网格，无论验证状态如何
+      drawingUtils.drawConnectors(
+        landmarks,
+        FaceLandmarker.FACE_LANDMARKS_TESSELATION,
+        { color: '#0FF', lineWidth: 0.2 }
+      )
     }
-    
+
     // 恢复变换
     ctx.restore()
   }
-  
+
   animationFrameId = requestAnimationFrame(predictWebcam)
 }
 
 // 初始化
 onMounted(async () => {
+  detectMobile()
   await createFaceLandmarkerWithFallback()
 })
 
@@ -381,13 +354,62 @@ h2 {
   position: relative;
   display: inline-block;
   margin: 0 auto;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 3px solid #007f8b;
+  box-shadow: 0 0 20px rgba(0, 127, 139, 0.3);
+  transition: all 0.3s ease;
+  
+  &:hover {
+    box-shadow: 0 0 30px rgba(0, 127, 139, 0.5);
+    transform: scale(1.02);
+  }
+  
+  // 人脸轮廓
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 240px;
+    border: 2px dashed rgba(255, 255, 255, 0.6);
+    border-radius: 48% 48% 50% 50% / 42% 42% 54% 54%;
+    pointer-events: none;
+    z-index: 10;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  
+  video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+  
+  .output-canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    border-radius: 50%;
+  }
 }
 
-.output-canvas {
-  position: absolute;
-  left: 0;
-  top: 0;
-  pointer-events: none;
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
 }
 
 .control-panel {
