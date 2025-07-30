@@ -249,15 +249,14 @@ function detectActions(landmarks: any) {
 
 onMounted(async () => {
   try {
-    // 加载模型 (使用 import 导入)
+    // 加载模型 (使用本地资源)
     const filesetResolver = await FilesetResolver.forVisionTasks(
-      // 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm'
       '/node_modules/@mediapipe/tasks-vision/wasm'
     )
     faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
       baseOptions: {
-        // 使用 CDN 模型文件（更稳定）
-        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
+        // 使用本地模型文件
+        modelAssetPath: '/mediapipe/face_landmarker.task',
       },
       runningMode: 'VIDEO',
       numFaces: 1, // 只处理一个人脸

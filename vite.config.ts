@@ -22,5 +22,9 @@ export default defineConfig({
     minify: 'esbuild',
     // 禁用 source map 以减少文件大小
     sourcemap: false
-  }
+  },
+  // 配置静态资源处理
+  assetsInclude: ['**/*.wasm', '**/*.task'],
+  // 配置开发服务器静态文件服务
+  publicDir: 'public'
 })
