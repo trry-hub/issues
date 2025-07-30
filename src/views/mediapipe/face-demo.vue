@@ -249,20 +249,21 @@ function detectActions(landmarks: any) {
 
 onMounted(async () => {
   try {
-    // 加载模型
+    // 加载模型 (使用 import 导入)
     const filesetResolver = await FilesetResolver.forVisionTasks(
-      'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm'
+      // 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm'
+      '/node_modules/@mediapipe/tasks-vision/wasm'
     )
     faceLandmarker = await FaceLandmarker.createFromOptions(filesetResolver, {
       baseOptions: {
-        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
-        // modelAssetPath: 'https://storage.googleapis.com/mediapipe-assets/face_landmarker.task'
+        // 使用 CDN 模型文件（更稳定）
+        modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task',
       },
       runningMode: 'VIDEO',
-      numFaces: 1,
+      numFaces: 1, // 只处理一个人脸
     })
 
-    // 获取摄像头
+    // 获取摄像头 (使用默认分辨率以确保准确性)
     stream = await navigator.mediaDevices.getUserMedia({
       video: {
         facingMode: 'user',
@@ -294,6 +295,10 @@ onMounted(async () => {
   }
 })
 
+// 添加帧率控制变量
+let lastProcessTime = 0;
+const processInterval = 150; // 每150ms处理一次，降低处理频率
+
 async function renderLoop() {
   // 添加更严格的 null 检查
   if (!video.value || !canvas.value || !faceLandmarker || !running) {
@@ -307,30 +312,38 @@ async function renderLoop() {
   const ctx = canvas.value.getContext('2d')
   if (!ctx) return
 
-  ctx.clearRect(0, 0, originalWidth.value, originalHeight.value)
+  // 控制处理频率以提高性能
+  const currentTime = performance.now();
+  const shouldProcess = currentTime - lastProcessTime > processInterval;
+  
+  if (shouldProcess) {
+    lastProcessTime = currentTime;
+    
+    ctx.clearRect(0, 0, originalWidth.value, originalHeight.value)
 
-  const results = faceLandmarker.detectForVideo(video.value, performance.now())
-  if (results.faceLandmarks) {
-    const drawingUtils = new DrawingUtils(ctx)
+    const results = faceLandmarker.detectForVideo(video.value, currentTime)
+    if (results.faceLandmarks) {
+      const drawingUtils = new DrawingUtils(ctx)
 
-    // We are only processing the first face? Actually, we loop over all, but numFaces=1 so one.
-    for (const landmarks of results.faceLandmarks) {
-      // 使用封装好的函数检测动作
-      actionState.value = detectActions(landmarks);
+      // We are only processing the first face? Actually, we loop over all, but numFaces=1 so one.
+      for (const landmarks of results.faceLandmarks) {
+        // 使用封装好的函数检测动作
+        actionState.value = detectActions(landmarks);
 
-      // 绘制面部标记
-      drawingUtils.drawConnectors(
-        landmarks,
-        FaceLandmarker.FACE_LANDMARKS_TESSELATION,
-        { color: '#0FF', lineWidth: 0.2 }
-      )
-      drawingUtils.drawLandmarks(
-        landmarks,
-        {
-          color: '#3D60E3',
-          radius: Math.max(originalWidth.value, originalHeight.value) * 0.001
-        }
-      )
+        // 绘制面部标记
+        drawingUtils.drawConnectors(
+          landmarks,
+          FaceLandmarker.FACE_LANDMARKS_TESSELATION,
+          { color: '#0FF', lineWidth: 0.2 }
+        )
+        // drawingUtils.drawLandmarks(
+        //   landmarks,
+        //   {
+        //     color: '#3D60E3',
+        //     radius: Math.max(originalWidth.value, originalHeight.value) * 0.001
+        //   }
+        // )
+      }
     }
   }
   requestAnimationFrame(renderLoop)

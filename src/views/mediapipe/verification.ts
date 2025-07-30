@@ -218,24 +218,55 @@ export function detectHeadDown(landmarks: any[]): boolean {
   // 计算垂直偏移比例
   const noseRatio = verticalDistance / eyeDistance;
   
-  // 添加下巴位置检测作为辅助条件
-  // 当低头时，下巴也会向下移动
+  // 计算下巴到眼睛中心的距离比例
   const chinToEyeDistance = chin.y - eyeCenter.y;
   const chinRatio = chinToEyeDistance / eyeDistance;
   
-  // 添加额头位置检测作为辅助条件
-  // 当低头时，额头会向上移动（Y值减小）
+  // 计算额头到眼睛中心的距离比例
   const foreheadToEyeDistance = forehead.y - eyeCenter.y;
   const foreheadRatio = foreheadToEyeDistance / eyeDistance;
   
+  // 计算鼻子到下巴的距离比例（用于判断整体面部倾斜）
+  const noseToChinDistance = chin.y - nose.y;
+  const noseToChinRatio = noseToChinDistance / eyeDistance;
+  
+  // 计算面部整体高度比例
+  const faceHeight = chin.y - forehead.y;
+  const faceHeightRatio = faceHeight / eyeDistance;
+  
+  // 真机优化：进一步降低阈值，提高检测灵敏度
   // 当头部低下时：
   // - 鼻尖Y坐标增大（向下移动），noseRatio值增大
   // - 下巴也会向下移动，chinRatio值增大
-  // - 额头会向上移动，foreheadRatio值减小（可能为负值）
-  // 调整阈值以适应真机环境，增加容错性
-  const noseCondition = noseRatio > 0.35; // 鼻尖向下偏移
-  const chinCondition = chinRatio > 0.7;  // 下巴向下偏移
-  const foreheadCondition = foreheadRatio < 0.1; // 额头向上偏移或偏移不大
+  // - 额头会向上移动，foreheadRatio值减小
   
-  return noseCondition && chinCondition && foreheadCondition;
+  // 主要条件：鼻尖向下偏移 - 进一步降低阈值
+  const noseCondition = noseRatio > 0.2; // 从0.25降低到0.2
+  
+  // 辅助条件1：下巴向下偏移 - 进一步降低阈值
+  const chinCondition = chinRatio > 0.4; // 从0.5降低到0.4
+  
+  // 辅助条件2：额头向上偏移或偏移不大 - 进一步放宽阈值
+  const foreheadCondition = foreheadRatio < 0.25; // 从0.2放宽到0.25
+  
+  // 新增条件：面部整体倾斜角度 - 放宽阈值
+  const faceTiltCondition = faceHeightRatio < 2.0; // 从1.8放宽到2.0
+  
+  // 新增条件：鼻子到下巴的相对位置 - 降低阈值
+  const noseChinCondition = noseToChinRatio > 0.25; // 从0.3降低到0.25
+  
+  // 真机优化：使用更宽松的组合条件
+  // 主要条件满足 + 至少1个辅助条件满足（从2个降低到1个）
+  const mainCondition = noseCondition;
+  const auxiliaryConditions = [
+    chinCondition,
+    foreheadCondition,
+    faceTiltCondition,
+    noseChinCondition
+  ];
+  
+  const satisfiedAuxiliary = auxiliaryConditions.filter(Boolean).length;
+  
+  // 主要条件满足且至少1个辅助条件满足
+  return mainCondition && satisfiedAuxiliary >= 1;
 }
