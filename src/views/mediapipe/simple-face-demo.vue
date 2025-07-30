@@ -1,10 +1,10 @@
 <template>
   <div class="simple-face-demo">
-    <h1>Simple Face Landmark Detection</h1>
+    <h1>简单人脸关键点检测</h1>
     
     <div class="demo-section">
-      <h2>Real-time Face Landmark Detection</h2>
-      <p>Hold your face in front of your webcam to get real-time face landmark detection.</p>
+      <h2>实时人脸关键点检测</h2>
+      <p>将您的脸部对准摄像头，即可获得实时人脸关键点检测。</p>
       <p v-if="isMobile" class="mobile-tip">📱 移动端提示：请确保摄像头权限已开启，并保持设备稳定</p>
       
       <div class="video-container">
@@ -27,8 +27,8 @@
             <div class="debug-content">
               <p><strong>设备信息:</strong></p>
               <ul>
-                <li>User Agent: {{ deviceInfo.userAgent }}</li>
-                <li>Platform: {{ deviceInfo.platform }}</li>
+                <li>用户代理: {{ deviceInfo.userAgent }}</li>
+                <li>平台: {{ deviceInfo.platform }}</li>
                 <li>移动设备: {{ deviceInfo.isMobile ? '是' : '否' }}</li>
                 <li>网络类型: {{ deviceInfo.networkType }}</li>
               </ul>
@@ -42,7 +42,7 @@
             class="webcam-button"
             :class="{ 'active': webcamRunning }"
           >
-            {{ webcamRunning ? 'DISABLE WEBCAM' : 'ENABLE WEBCAM' }}
+            {{ webcamRunning ? '关闭摄像头' : '开启摄像头' }}
           </button>
           
           <div class="controls">
@@ -72,7 +72,7 @@
       </div>
       
       <div class="blend-shapes" v-if="blendShapes.length > 0">
-        <h3>Face Blend Shapes</h3>
+        <h3>面部表情参数</h3>
         <ul class="blend-shapes-list">
           <li 
             v-for="shape in blendShapes" 
@@ -80,7 +80,7 @@
             class="blend-shapes-item"
           >
             <span class="blend-shapes-label">
-              {{ shape.displayName || shape.categoryName }}
+              {{ getBlendShapeDisplayName(shape.categoryName) }}
             </span>
             <span 
               class="blend-shapes-value" 
@@ -136,7 +136,7 @@ async function createFaceLandmarker() {
       userAgent: navigator.userAgent,
       platform: navigator.platform,
       isMobile: isMobile.value,
-      connection: (navigator as any).connection?.effectiveType || 'unknown'
+      connection: (navigator as any).connection?.effectiveType || '未知'
     })
     
     const filesetResolver = await FilesetResolver.forVisionTasks(
@@ -154,12 +154,12 @@ async function createFaceLandmarker() {
       numFaces: 1
     })
     
-    console.log('Face landmarker loaded successfully')
+    console.log('人脸关键点检测器加载成功 (GPU)')
     isLoading.value = false
   } catch (error) {
-    console.error('Error loading face landmarker:', error)
+    console.error('加载人脸关键点检测器时出错:', error)
     console.error('错误详情:', {
-      name: error instanceof Error ? error.name : 'Unknown',
+      name: error instanceof Error ? error.name : '未知',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     })
@@ -223,7 +223,7 @@ async function createFaceLandmarkerWithFallback() {
   } catch (error) {
     console.error('Error loading face landmarker:', error)
     console.error('错误详情:', {
-      name: error instanceof Error ? error.name : 'Unknown',
+      name: error instanceof Error ? error.name : '未知',
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     })
@@ -246,14 +246,14 @@ function hasGetUserMedia() {
 async function toggleWebcam() {
   if (!faceLandmarker) {
     if (isLoading.value) {
-      console.log("Face landmarker is still loading...")
+      console.log("人脸关键点检测器正在加载中...")
       return
     }
     if (loadError.value) {
-      console.log("Face landmarker failed to load:", loadError.value)
+      console.log("人脸关键点检测器加载失败:", loadError.value)
       return
     }
-    console.log("Wait! Face landmarker not loaded yet.")
+    console.log("请等待！人脸关键点检测器尚未加载完成。")
     return
   }
 
@@ -268,7 +268,7 @@ async function toggleWebcam() {
 // Enable webcam
 async function enableCam() {
   if (!hasGetUserMedia()) {
-    console.warn("getUserMedia() is not supported by your browser")
+    console.warn("您的浏览器不支持 getUserMedia()")
     return
   }
 
@@ -285,12 +285,12 @@ async function enableCam() {
       videoElement.value.srcObject = stream
       // 等待视频元数据加载完成后再开始检测
       videoElement.value.addEventListener("loadedmetadata", () => {
-        console.log('Video loaded with dimensions:', videoElement.value?.videoWidth, 'x', videoElement.value?.videoHeight)
+        console.log('视频加载完成，尺寸:', videoElement.value?.videoWidth, 'x', videoElement.value?.videoHeight)
         predictWebcam()
       })
     }
   } catch (error) {
-    console.error('Error accessing webcam:', error)
+    console.error('访问摄像头时出错:', error)
   }
 }
 
@@ -320,11 +320,11 @@ async function predictWebcam() {
   
   // 调试信息（可选）
   if (process.env.NODE_ENV === 'development') {
-    console.log('Video dimensions:', video.videoWidth, 'x', video.videoHeight)
-    console.log('Canvas dimensions:', canvas.width, 'x', canvas.height)
-    console.log('Display dimensions:', currentVideoWidth, 'x', currentVideoWidth * radio)
-    console.log('Canvas style transform:', canvas.style.transform)
-    console.log('Video style transform:', video.style.transform)
+    console.log('视频尺寸:', video.videoWidth, 'x', video.videoHeight)
+    console.log('画布尺寸:', canvas.width, 'x', canvas.height)
+    console.log('显示尺寸:', currentVideoWidth, 'x', currentVideoWidth * radio)
+    console.log('画布样式变换:', canvas.style.transform)
+    console.log('视频样式变换:', video.style.transform)
   }
 
   let startTimeMs = performance.now()
@@ -436,6 +436,96 @@ const checkNetworkStatus = () => {
   } else {
     console.log('无法获取网络连接信息')
   }
+}
+
+// 获取面部表情参数的中文显示名称
+const getBlendShapeDisplayName = (categoryName: string): string => {
+  const nameMap: { [key: string]: string } = {
+    // 眼睛相关
+    'eyeBlinkLeft': '左眼眨眼',
+    'eyeBlinkRight': '右眼眨眼',
+    'eyeLookDownLeft': '左眼向下看',
+    'eyeLookDownRight': '右眼向下看',
+    'eyeLookInLeft': '左眼向内看',
+    'eyeLookInRight': '右眼向内看',
+    'eyeLookOutLeft': '左眼向外看',
+    'eyeLookOutRight': '右眼向外看',
+    'eyeLookUpLeft': '左眼向上看',
+    'eyeLookUpRight': '右眼向上看',
+    'eyeSquintLeft': '左眼眯眼',
+    'eyeSquintRight': '右眼眯眼',
+    'eyeWideLeft': '左眼睁大',
+    'eyeWideRight': '右眼睁大',
+    
+    // 嘴巴相关
+    'mouthClose': '闭嘴',
+    'mouthFrown': '嘴角下垂',
+    'mouthFunnel': '撅嘴',
+    'mouthLeft': '嘴向左',
+    'mouthLowerDownLeft': '左下唇下垂',
+    'mouthLowerDownRight': '右下唇下垂',
+    'mouthPressLeft': '左唇压紧',
+    'mouthPressRight': '右唇压紧',
+    'mouthPucker': '撅嘴',
+    'mouthRight': '嘴向右',
+    'mouthRollLower': '下唇卷起',
+    'mouthRollUpper': '上唇卷起',
+    'mouthShrugLower': '下唇耸肩',
+    'mouthShrugUpper': '上唇耸肩',
+    'mouthSmile': '微笑',
+    'mouthStretchLeft': '左嘴拉伸',
+    'mouthStretchRight': '右嘴拉伸',
+    'mouthUpperUpLeft': '左上唇上扬',
+    'mouthUpperUpRight': '右上唇上扬',
+    
+    // 鼻子相关
+    'noseSneerLeft': '左鼻翼收缩',
+    'noseSneerRight': '右鼻翼收缩',
+    
+    // 脸颊相关
+    'cheekPuff': '脸颊鼓起',
+    'cheekSquintLeft': '左脸颊收缩',
+    'cheekSquintRight': '右脸颊收缩',
+    
+    // 下巴相关
+    'jawForward': '下巴前伸',
+    'jawLeft': '下巴向左',
+    'jawOpen': '张嘴',
+    'jawRight': '下巴向右',
+    
+    // 舌头相关
+    'tongueOut': '伸舌头',
+    
+    // 眉毛相关
+    'browDownLeft': '左眉下垂',
+    'browDownRight': '右眉下垂',
+    'browInnerUp': '眉毛内扬',
+    'browOuterUpLeft': '左眉外扬',
+    'browOuterUpRight': '右眉外扬',
+    
+    // 其他
+    'dimpler': '酒窝',
+    'lipCornerPuller': '嘴角上扬',
+    'lipCornerPullerLeft': '左嘴角上扬',
+    'lipCornerPullerRight': '右嘴角上扬',
+    'lipStretcher': '嘴唇拉伸',
+    'lipStretcherLeft': '左唇拉伸',
+    'lipStretcherRight': '右唇拉伸',
+    'lipTightener': '嘴唇收紧',
+    'lipTightenerLeft': '左唇收紧',
+    'lipTightenerRight': '右唇收紧',
+    'lipsToward': '嘴唇向前',
+    'lowerLipDepressorLeft': '左下唇下垂',
+    'lowerLipDepressorRight': '右下唇下垂',
+    'mouthDimpleLeft': '左嘴角酒窝',
+    'mouthDimpleRight': '右嘴角酒窝',
+    'mouthFrownLeft': '左嘴角下垂',
+    'mouthFrownRight': '右嘴角下垂',
+    'mouthSmileLeft': '左嘴角上扬',
+    'mouthSmileRight': '右嘴角上扬'
+  }
+  
+  return nameMap[categoryName] || categoryName
 }
 
 // Lifecycle
