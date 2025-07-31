@@ -51,20 +51,6 @@ defineOptions({
 const videoRef = ref<HTMLVideoElement | null>(null)
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 
-// 同步 canvas 和 video 尺寸
-const syncCanvasSize = () => {
-  if (videoRef.value && canvasRef.value) {
-    const video = videoRef.value
-    const canvas = canvasRef.value
-    
-    // 设置 canvas 的实际尺寸为视频的原始尺寸
-    canvas.width = video.videoWidth || 320
-    canvas.height = video.videoHeight || 320
-    
-    console.log(`[FaceVerification] 同步 canvas 尺寸: ${canvas.width}x${canvas.height}`)
-  }
-}
-
 // Props
 interface Props {
   actions?: string[]
@@ -279,8 +265,7 @@ defineExpose({
   verificationState: readonly(verificationState),
   currentAction: readonly(currentAction),
   videoRef,
-  canvasRef,
-  syncCanvasSize
+  canvasRef
 })
 </script>
 

@@ -10,7 +10,6 @@
   "dependencies": {
     "@mediapipe/tasks-vision": "0.10.22-rc.20250304",
     "@tensorflow-models/face-landmarks-detection": "^1.0.6",
-    "@tensorflow/tfjs": "^4.22.0",
     "@tensorflow/tfjs-backend-webgl": "^4.22.0",
     "@vueuse/core": "^13.5.0",
     "eruda": "^3.4.0",
@@ -20,6 +19,8 @@
   "devDependencies": {
     "@types/node": "^24.1.0",
     "@vitejs/plugin-vue": "^5.1.4",
+    "rollup-plugin-commonjs": "^10.1.0",
+    "rollup-plugin-external-globals": "^0.13.0",
     "sass": "^1.80.6",
     "typescript": "^5.6.3",
     "vite": "^5.4.10",

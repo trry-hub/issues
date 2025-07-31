@@ -65,10 +65,6 @@ function drawResults(faces: faceLandmarksDetection.Face[]) {
   ctx.strokeStyle = '#00FF00';
   ctx.lineWidth = 2;
   faces.forEach(face => {
-    if (face.box) {
-      const { xMin, yMin, xMax, yMax } = face.box;
-      ctx.strokeRect(xMin, yMin, xMax - xMin, yMax - yMin);
-    }
     face.keypoints.forEach((kp: faceLandmarksDetection.Keypoint) => {
       ctx.beginPath();
       ctx.arc(kp.x, kp.y, 1.5, 0, 2 * Math.PI);
@@ -107,9 +103,9 @@ async function loadModel() {
     model = await faceLandmarksDetection.createDetector(
       faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
       {
-        // runtime: 'mediapipe',
-        // solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619',
-        runtime: 'tfjs',
+        runtime: 'mediapipe',
+        solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619',
+        // runtime: 'tfjs',
         maxFaces: 1,
         refineLandmarks: false
       }
