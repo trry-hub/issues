@@ -1,11 +1,5 @@
 <script setup lang="ts">
-// import QxsDesign from '../../business-vue3/dist'
 import { onMounted, ref } from 'vue';
-// import { ElButton } from 'element-plus'
-// import { QxsFixedActionBar } from "business-vue3";
-// import 'business-vue3/es/base.css'
-// import 'business-vue3/es/fixed-action-bar.css'
-// console.log('QxsBusiness: ', QxsFixedActionBar)
 
 const count = ref(0)
 onMounted(() => {
@@ -15,16 +9,19 @@ onMounted(() => {
 
 <template>
   <div>
+    <p>这是第一行内容</p>
     <div class="container">
-      <qxs-rich-editor></qxs-rich-editor>
+      123
     </div>
-    <qxs-fixed-action-bar>test</qxs-fixed-action-bar>
+    <span>这是最后一行内容</span>
   </div>
 </template>
 
 <style scoped>
 .container {
-  height: 100vh;
+  height: 10vh;
   background-color: #ff6700;
+  position: sticky;
+  bottom: 0;
 }
 </style>
